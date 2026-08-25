@@ -19,6 +19,10 @@ src/RenkKapis.Core/         Kural motoru - UI ve ag bilmez, %100 test edilebilir
     Engine/                 GameEngine (kural mantigi), PlayResult
     Ai/                     SimpleBot (bot stratejisi)
 src/RenkKapis.ConsoleSim/   Bot simulasyonu (Sprint 1 dogrulamasi)
+src/RenkKapis.Web/          Blazor Web App (InteractiveServer)
+    Services/GameSession    Sira orkestrasyonu, insan + bot oturumu
+    Components/Game/        CardView (kartlar tamamen CSS ile cizilir)
+    Components/Pages/Game   Ana oyun ekrani
 tests/RenkKapis.Core.Tests/ Birim + butunlesme testleri
 ```
 
@@ -47,6 +51,10 @@ Testler:
 
     dotnet test
 
+Web arayuzu (tarayicida http://localhost:5193):
+
+    dotnet run --project src/RenkKapis.Web --launch-profile http
+
 Bot simulasyonu (4 bot birbirine karsi tam oyun):
 
     dotnet run --project src/RenkKapis.ConsoleSim
@@ -59,7 +67,7 @@ Ayni oyunu tekrar uretmek icin tohum verilebilir:
 
 - [x] Sprint 0 - Analiz, kural karar tablosu, proje iskeleti
 - [x] Sprint 1 - Kural motoru + bot + testler (42 test, 550 tam oyun simulasyonu)
-- [ ] Sprint 2 - Blazor arayuz, bota karsi oynanabilir oyun
+- [x] Sprint 2 - Blazor arayuz, bota karsi oynanabilir oyun
 - [ ] Sprint 3 - SignalR ile cok oyunculu, oda yonetimi
 - [ ] Sprint 4 - Kayit/giris, mac gecmisi, lider tablosu
 - [ ] Sprint 5 - Bug fix, dokumantasyon, sunum

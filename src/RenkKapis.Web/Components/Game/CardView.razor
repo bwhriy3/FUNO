@@ -1,0 +1,72 @@
+@using RenkKapis.Core.Model
+@using RenkKapis.Web.Services
+
+@if (FaceDown)
+{
+    <div class="card card-back @SizeClass" aria-label="Kapali kart"></div>
+}
+else if (Card is not null)
+{
+    <button type="button"
+            class="card @ColorClass @SizeClass @(Playable ? "playable" : "") @(Dimmed ? "dimmed" : "")"
+            disabled="@(!Playable || !OnClick.HasDelegate)"
+            title="@GameSession.Describe(Card)"
+            aria-label="@GameSession.Describe(Card)"
+            @onclick="HandleClick">
+        <span class="card-corner top">@Symbol</span>
+        <span class="card-center">@Symbol</span>
+        <span class="card-corner bottom">@Symbol</span>
+    </button>
+}
+
+@code {
+    [Parameter] public Card? Card { get; set; }
+
+    /// <summary>Kart oynanabilir mi? false ise tiklanamaz ve soluk gorunur.</summary>
+    [Parameter] public bool Playable { get; set; }
+
+    /// <summary>Kapali kart olarak ciz (rakip elleri, deste).</summary>
+    [Parameter] public bool FaceDown { get; set; }
+
+    /// <summary>Soluk goster (oynanamayan el kartlari).</summary>
+    [Parameter] public bool Dimmed { get; set; }
+
+    /// <summary>"sm" | "" | "lg"</summary>
+    [Parameter] public string Size { get; set; } = "";
+
+    [Parameter] public EventCallback<Card> OnClick { get; set; }
+
+    private string SizeClass => Size switch
+    {
+        "sm" => "card-sm",
+        "lg" => "card-lg",
+        _ => ""
+    };
+
+    private string ColorClass => Card is null ? "" : Card.Color switch
+    {
+        CardColor.Red => "c-red",
+        CardColor.Yellow => "c-yellow",
+        CardColor.Green => "c-green",
+        CardColor.Blue => "c-blue",
+        _ => "c-wild"
+    };
+
+    /// <summary>Kartin uzerinde gorunen sembol.</summary>
+    private string Symbol => Card is null ? "" : Card.Type switch
+    {
+        CardType.Number => Card.Value!.Value.ToString(),
+        CardType.Skip => "⃠",        // uzeri cizili daire
+        CardType.Reverse => "⇄",     // cift yonlu ok
+        CardType.DrawTwo => "+2",
+        CardType.Wild => "✦",        // yildiz
+        CardType.WildDrawFour => "+4",
+        _ => "?"
+    };
+
+    private async Task HandleClick()
+    {
+        if (Playable && Card is not null)
+            await OnClick.InvokeAsync(Card);
+    }
+}

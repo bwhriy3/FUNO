@@ -1,0 +1,382 @@
+:root {
+    --felt: #12603f;
+    --felt-dark: #0d4a30;
+    --panel: rgba(0, 0, 0, .28);
+    --radius: 10px;
+
+    --c-red: #d63447;
+    --c-yellow: #e8b800;
+    --c-green: #2e9e4f;
+    --c-blue: #2d6fd6;
+    --c-wild: #2f2f38;
+    --accent: #ffd84d;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #fff;
+    background: radial-gradient(ellipse at center, var(--felt) 0%, var(--felt-dark) 100%);
+    background-attachment: fixed;
+}
+
+/* ---------- Kurulum ekrani ---------- */
+
+.setup {
+    max-width: 380px;
+    margin: 10vh auto;
+    padding: 2rem;
+    background: var(--panel);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.setup h1 { margin: 0; font-size: 2.4rem; letter-spacing: -.02em; }
+.setup .tagline { margin: -.75rem 0 .5rem; opacity: .7; font-size: .9rem; }
+
+.setup label {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    font-size: .85rem;
+    opacity: .85;
+}
+
+.setup input, .setup select {
+    padding: .6rem .75rem;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    font-size: 1rem;
+}
+
+/* ---------- Masa ---------- */
+
+.table {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.opponents {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.opponent {
+    padding: .6rem .9rem;
+    border-radius: var(--radius);
+    background: var(--panel);
+    border: 2px solid transparent;
+    text-align: center;
+    transition: border-color .2s, transform .2s;
+}
+
+.opponent.active {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+}
+
+.opponent-name { font-weight: 600; font-size: .9rem; margin-bottom: .4rem; }
+.opponent-count { font-size: .75rem; opacity: .7; margin-top: .3rem; }
+
+.opponent-cards { display: flex; justify-content: center; }
+.opponent-cards > * { margin-left: -14px; }
+.opponent-cards > *:first-child { margin-left: 0; }
+
+.uno-badge {
+    background: var(--accent);
+    color: #000;
+    font-size: .65rem;
+    font-weight: 700;
+    padding: .1rem .35rem;
+    border-radius: 4px;
+    margin-left: .35rem;
+    vertical-align: middle;
+}
+
+/* ---------- Masa ortasi ---------- */
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem 0;
+}
+
+.pile { text-align: center; position: relative; }
+.pile-label { font-size: .7rem; opacity: .6; margin-bottom: .4rem; }
+.pile-count { font-size: .75rem; opacity: .7; margin-top: .4rem; }
+
+.penalty {
+    margin-top: .4rem;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.active-color {
+    padding: .8rem 1.1rem;
+    border-radius: var(--radius);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .18);
+}
+
+.active-color span { font-size: .65rem; opacity: .85; }
+.active-color strong { font-size: 1rem; }
+
+/* ---------- Durum ---------- */
+
+.status {
+    text-align: center;
+    min-height: 1.5rem;
+    font-size: .95rem;
+}
+
+.your-turn { color: var(--accent); }
+.winner { color: var(--accent); font-size: 1.3rem; }
+.thinking { opacity: .65; font-style: italic; }
+
+/* ---------- El ---------- */
+
+.hand-area {
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: .9rem;
+}
+
+.hand-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    font-size: .9rem;
+}
+
+.actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.drawn-hint { font-size: .8rem; color: var(--accent); }
+
+.hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: center;
+    min-height: 110px;
+}
+
+/* ---------- Kart ---------- */
+
+.card {
+    width: 66px;
+    height: 96px;
+    border-radius: 8px;
+    border: 3px solid #fff;
+    background: var(--c-wild);
+    color: #fff;
+    position: relative;
+    padding: 0;
+    font-family: inherit;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .35);
+    transition: transform .15s, box-shadow .15s;
+    flex-shrink: 0;
+}
+
+.card-sm { width: 34px; height: 50px; border-width: 2px; border-radius: 5px; }
+.card-lg { width: 82px; height: 118px; }
+
+.card.c-red    { background: var(--c-red); }
+.card.c-yellow { background: var(--c-yellow); color: #3a2f00; }
+.card.c-green  { background: var(--c-green); }
+.card.c-blue   { background: var(--c-blue); }
+
+.card.c-wild {
+    background: conic-gradient(var(--c-red) 0 25%, var(--c-yellow) 0 50%,
+                               var(--c-green) 0 75%, var(--c-blue) 0);
+}
+
+.card-center {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    /* Joker kartlarda renkli zemin uzerinde okunakli kalmasi icin */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+
+.card-lg .card-center { font-size: 2.1rem; }
+
+.card-corner {
+    position: absolute;
+    font-size: .7rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: .9;
+}
+
+.card-corner.top { top: 5px; left: 6px; }
+.card-corner.bottom { bottom: 5px; right: 6px; transform: rotate(180deg); }
+.card-sm .card-corner, .card-sm .card-center { display: none; }
+
+.card.playable {
+    cursor: pointer;
+    box-shadow: 0 0 0 2px var(--accent), 0 4px 10px rgba(0, 0, 0, .4);
+}
+
+.card.playable:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 0 2px var(--accent), 0 10px 18px rgba(0, 0, 0, .45);
+}
+
+.card.playable:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+.card.dimmed { opacity: .45; }
+
+.card-back {
+    background: repeating-linear-gradient(45deg, #1b2a4a 0 6px, #2a3f6b 6px 12px);
+    border-color: #fff;
+}
+
+/* ---------- Butonlar ---------- */
+
+.btn {
+    padding: .5rem .9rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, .3);
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    font-size: .85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.btn:hover { background: rgba(255, 255, 255, .22); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.btn.primary {
+    background: var(--accent);
+    color: #1b1b1b;
+    border-color: var(--accent);
+    font-weight: 600;
+    font-size: 1rem;
+    padding: .7rem;
+}
+
+.btn.primary:hover { background: #ffe27a; }
+
+.btn.uno {
+    background: var(--accent);
+    color: #1b1b1b;
+    border-color: var(--accent);
+    font-weight: 700;
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+}
+
+.btn.ghost { background: transparent; opacity: .7; }
+
+/* ---------- Oyun kaydi ---------- */
+
+.log {
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: .6rem .9rem;
+    font-size: .8rem;
+}
+
+.log summary { cursor: pointer; opacity: .75; }
+
+.log ul {
+    list-style: none;
+    padding: 0;
+    margin: .6rem 0 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.log li {
+    padding: .2rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    opacity: .85;
+}
+
+/* ---------- Renk secim penceresi ---------- */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal {
+    background: #1e2a24;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    min-width: 300px;
+}
+
+.modal h2 { margin: 0 0 1rem; font-size: 1.2rem; }
+
+.color-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .6rem;
+    margin-bottom: 1rem;
+}
+
+.color-btn {
+    padding: 1.1rem .5rem;
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: .9rem;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+
+.color-btn:hover { border-color: #fff; }
+.color-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* ---------- Kucuk ekran ---------- */
+
+@media (max-width: 600px) {
+    .center { gap: 1rem; }
+    .card { width: 54px; height: 78px; }
+    .card-lg { width: 66px; height: 96px; }
+    .card-center { font-size: 1.4rem; }
+    .hand { gap: .35rem; }
+}

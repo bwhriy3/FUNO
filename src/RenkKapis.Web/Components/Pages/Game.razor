@@ -1,0 +1,216 @@
+@page "/"
+@rendermode InteractiveServer
+
+@using RenkKapis.Core.Engine
+@using RenkKapis.Core.Model
+@using RenkKapis.Web.Components.Game
+@using RenkKapis.Web.Services
+
+@implements IDisposable
+@inject GameSession Session
+
+<PageTitle>RenkKapis</PageTitle>
+
+@if (Session.State is null)
+{
+    <div class="setup">
+        <h1>RenkKapis</h1>
+        <p class="tagline">UNO benzeri kart oyunu</p>
+
+        <label>
+            Adin
+            <input type="text" @bind="_playerName" maxlength="16" placeholder="Sen" />
+        </label>
+
+        <label>
+            Rakip sayisi
+            <select @bind="_botCount">
+                <option value="1">1 bot</option>
+                <option value="2">2 bot</option>
+                <option value="3">3 bot</option>
+            </select>
+        </label>
+
+        <button class="btn primary" @onclick="StartGame">Oyunu Basla</button>
+    </div>
+}
+else
+{
+    var state = Session.State;
+
+    <div class="table">
+
+        <!-- Rakipler -->
+        <div class="opponents">
+            @foreach (var p in state.Players.Where(p => p != Session.Human))
+            {
+                <div class="opponent @(state.CurrentPlayer == p && !state.IsFinished ? "active" : "")">
+                    <div class="opponent-name">
+                        @p.Name
+                        @if (p.CardCount == 1)
+                        {
+                            <span class="uno-badge">TEK!</span>
+                        }
+                    </div>
+                    <div class="opponent-cards">
+                        @for (int i = 0; i < Math.Min(p.CardCount, 8); i++)
+                        {
+                            <CardView FaceDown="true" Size="sm" />
+                        }
+                    </div>
+                    <div class="opponent-count">@p.CardCount kart</div>
+                </div>
+            }
+        </div>
+
+        <!-- Masa ortasi -->
+        <div class="center">
+            <div class="pile">
+                <div class="pile-label">Deste</div>
+                <CardView FaceDown="true" Size="lg" />
+                <div class="pile-count">@state.Deck.DrawPileCount</div>
+            </div>
+
+            <div class="active-color" style="background: @ColorHex(state.ActiveColor)">
+                <span>Gecerli renk</span>
+                <strong>@GameSession.Localize(state.ActiveColor)</strong>
+            </div>
+
+            <div class="pile">
+                <div class="pile-label">Ustteki kart</div>
+                <CardView Card="state.TopCard" Size="lg" />
+                @if (state.PendingDrawCount > 0)
+                {
+                    <div class="penalty">+@state.PendingDrawCount ceza!</div>
+                }
+            </div>
+        </div>
+
+        <!-- Durum satiri -->
+        <div class="status">
+            @if (state.IsFinished)
+            {
+                <strong class="winner">Kazanan: @state.Winner!.Name</strong>
+            }
+            else if (Session.IsHumanTurn)
+            {
+                <strong class="your-turn">Sira sende</strong>
+                @if (state.PendingDrawCount > 0 && !GameEngine.HasPlayableCard(state, Session.Human!))
+                {
+                    <span>— @state.PendingDrawCount kart cekmelisin</span>
+                }
+            }
+            else
+            {
+                <span class="thinking">@state.CurrentPlayer.Name dusunuyor…</span>
+            }
+        </div>
+
+        <!-- Insan oyuncunun eli -->
+        <div class="hand-area">
+            <div class="hand-header">
+                <span>@Session.Human!.Name — @Session.Human.CardCount kart</span>
+
+                <div class="actions">
+                    @if (Session.Human.CardCount == 2 && !Session.Human.HasCalledUno && Session.IsHumanTurn)
+                    {
+                        <button class="btn uno" @onclick="Session.CallUnoAsync">TEK! de</button>
+                    }
+
+                    @if (Session.DrawnPlayableCard is not null)
+                    {
+                        <span class="drawn-hint">
+                            @GameSession.Describe(Session.DrawnPlayableCard) cektin — oynayabilirsin
+                        </span>
+                        <button class="btn" @onclick="Session.PassAfterDrawAsync">Pas gec</button>
+                    }
+                    else if (Session.IsHumanTurn && !state.IsFinished)
+                    {
+                        <button class="btn" @onclick="Session.DrawCardAsync">
+                            @(state.PendingDrawCount > 0 ? $"{state.PendingDrawCount} kart cek" : "Kart cek")
+                        </button>
+                    }
+
+                    <button class="btn ghost" @onclick="Reset">Yeni oyun</button>
+                </div>
+            </div>
+
+            <div class="hand">
+                @foreach (var card in Session.Human.Hand)
+                {
+                    bool playable = Session.IsHumanTurn && GameEngine.CanPlay(state, card);
+                    <CardView Card="card"
+                              Playable="playable"
+                              Dimmed="@(!playable)"
+                              OnClick="Session.PlayCardAsync" />
+                }
+            </div>
+        </div>
+
+        <!-- Oyun kaydi -->
+        <details class="log" open>
+            <summary>Oyun kaydi</summary>
+            <ul>
+                @foreach (var line in Session.Log.Take(12))
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        </details>
+    </div>
+
+    <!-- Renk secim penceresi -->
+    @if (Session.PendingWildCard is not null)
+    {
+        <div class="modal-backdrop" @onclick="Session.CancelColorChoiceAsync">
+            <div class="modal" @onclick:stopPropagation="true">
+                <h2>Renk sec</h2>
+                <div class="color-choices">
+                    @foreach (var color in new[] { CardColor.Red, CardColor.Yellow, CardColor.Green, CardColor.Blue })
+                    {
+                        <button class="color-btn"
+                                style="background: @ColorHex(color)"
+                                @onclick="() => Session.ChooseColorAsync(color)">
+                            @GameSession.Localize(color)
+                        </button>
+                    }
+                </div>
+                <button class="btn ghost" @onclick="Session.CancelColorChoiceAsync">Vazgec</button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private string _playerName = "";
+    private int _botCount = 3;
+
+    protected override void OnInitialized()
+    {
+        Session.StateChanged += OnStateChangedAsync;
+    }
+
+    private Task StartGame() => Session.StartNewGameAsync(_playerName, _botCount);
+
+    private Task Reset() => Session.StartNewGameAsync(_playerName, _botCount);
+
+    /// <summary>
+    /// Bot hamleleri arka planda islediginden, arayuzu Blazor'un
+    /// senkronizasyon baglaminda guncellemek zorundayiz.
+    /// </summary>
+    private Task OnStateChangedAsync() => InvokeAsync(StateHasChanged);
+
+    private static string ColorHex(CardColor color) => color switch
+    {
+        CardColor.Red => "#d63447",
+        CardColor.Yellow => "#e8b800",
+        CardColor.Green => "#2e9e4f",
+        CardColor.Blue => "#2d6fd6",
+        _ => "#3a3a3a"
+    };
+
+    public void Dispose()
+    {
+        Session.StateChanged -= OnStateChangedAsync;
+    }
+}
