@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Funo.ConsoleSim/Funo.ConsoleSim.csproj" />
+    <Project Path="src/Funo.Core/Funo.Core.csproj" />
+    <Project Path="src/Funo.Web/Funo.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Funo.Core.Tests/Funo.Core.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,238 @@
+@page "/"
+@rendermode InteractiveServer
+
+@using Funo.Core.Engine
+@using Funo.Core.Model
+@using Funo.Web.Components.Game
+@using Funo.Web.Localization
+@using Funo.Web.Services
+
+@implements IDisposable
+@inject GameSession Session
+@inject LanguageState Language
+@inject NavigationManager Nav
+
+<PageTitle>fUNO</PageTitle>
+
+@if (Session.State is null)
+{
+    <div class="setup">
+        <div class="setup-top">
+            <h1>fUNO</h1>
+            <LanguageSwitch />
+        </div>
+        <p class="tagline">@Language.T("app.tagline")</p>
+
+        <label>
+            @Language.T("setup.name")
+            <input type="text" @bind="_playerName" maxlength="16"
+                   placeholder="@Language.T("setup.namePlaceholder")" />
+        </label>
+
+        <label>
+            @Language.T("setup.opponents")
+            <select @bind="_botCount">
+                @for (int i = 1; i <= 3; i++)
+                {
+                    int n = i;
+                    <option value="@n">@Language.T("setup.bots", n)</option>
+                }
+            </select>
+        </label>
+
+        <button class="btn primary" @onclick="StartGame">@Language.T("setup.start")</button>
+        <button class="btn ghost" @onclick="@(() => Nav.NavigateTo("/multiplayer"))">
+            @Language.T("setup.multiPlayer")
+        </button>
+    </div>
+}
+else
+{
+    var state = Session.State;
+
+    <div class="table">
+
+        <div class="table-top">
+            <LanguageSwitch />
+        </div>
+
+        <!-- Rakipler / Opponents -->
+        <div class="opponents">
+            @foreach (var p in state.Players.Where(p => p != Session.Human))
+            {
+                <div class="opponent @(state.CurrentPlayer == p && !state.IsFinished ? "active" : "")">
+                    <div class="opponent-name">
+                        @p.Name
+                        @if (p.CardCount == 1)
+                        {
+                            <span class="uno-badge">@Language.T("table.unoBadge")</span>
+                        }
+                    </div>
+                    <div class="opponent-cards">
+                        @for (int i = 0; i < Math.Min(p.CardCount, 8); i++)
+                        {
+                            <CardView FaceDown="true" Size="sm" />
+                        }
+                    </div>
+                    <div class="opponent-count">@Language.T("table.cards", p.CardCount)</div>
+                </div>
+            }
+        </div>
+
+        <!-- Masa ortasi / Table centre -->
+        <div class="center">
+            <div class="pile">
+                <div class="pile-label">@Language.T("table.deck")</div>
+                <CardView FaceDown="true" Size="lg" />
+                <div class="pile-count">@state.Deck.DrawPileCount</div>
+            </div>
+
+            <div class="active-color" style="background: @ColorHex(state.ActiveColor)">
+                <span>@Language.T("table.activeColor")</span>
+                <strong>@Strings.Color(state.ActiveColor, Language.Current)</strong>
+            </div>
+
+            <div class="pile">
+                <div class="pile-label">@Language.T("table.topCard")</div>
+                <CardView Card="state.TopCard" Size="lg" />
+                @if (state.PendingDrawCount > 0)
+                {
+                    <div class="penalty">@Language.T("table.penalty", state.PendingDrawCount)</div>
+                }
+            </div>
+        </div>
+
+        <!-- Durum satiri / Status line -->
+        <div class="status">
+            @if (state.IsFinished)
+            {
+                <strong class="winner">@Language.T("table.winner", state.Winner!.Name)</strong>
+            }
+            else if (Session.IsHumanTurn)
+            {
+                <strong class="your-turn">@Language.T("table.yourTurn")</strong>
+                @if (state.PendingDrawCount > 0 && !GameEngine.HasPlayableCard(state, Session.Human!))
+                {
+                    <span> @Language.T("table.mustDraw", state.PendingDrawCount)</span>
+                }
+            }
+            else
+            {
+                <span class="thinking">@Language.T("table.thinking", state.CurrentPlayer.Name)</span>
+            }
+        </div>
+
+        <!-- Insan oyuncunun eli / Your hand -->
+        <div class="hand-area">
+            <div class="hand-header">
+                <span>@Session.Human!.Name — @Language.T("table.cards", Session.Human.CardCount)</span>
+
+                <div class="actions">
+                    @if (Session.Human.CardCount == 2 && !Session.Human.HasCalledUno && Session.IsHumanTurn)
+                    {
+                        <button class="btn uno" @onclick="Session.CallUnoAsync">@Language.T("table.callUno")</button>
+                    }
+
+                    @if (Session.DrawnPlayableCard is not null)
+                    {
+                        <span class="drawn-hint">
+                            @Language.T("table.drawnHint", Strings.Card(Session.DrawnPlayableCard, Language.Current))
+                        </span>
+                        <button class="btn" @onclick="Session.PassAfterDrawAsync">@Language.T("table.pass")</button>
+                    }
+                    else if (Session.IsHumanTurn && !state.IsFinished)
+                    {
+                        <button class="btn" @onclick="Session.DrawCardAsync">
+                            @(state.PendingDrawCount > 0
+                                ? Language.T("table.drawN", state.PendingDrawCount)
+                                : Language.T("table.drawCard"))
+                        </button>
+                    }
+
+                    <button class="btn ghost" @onclick="Reset">@Language.T("table.newGame")</button>
+                </div>
+            </div>
+
+            <div class="hand">
+                @foreach (var card in Session.Human.Hand)
+                {
+                    bool playable = Session.IsHumanTurn && GameEngine.CanPlay(state, card);
+                    <CardView Card="card"
+                              Playable="playable"
+                              Dimmed="@(!playable)"
+                              OnClick="Session.PlayCardAsync" />
+                }
+            </div>
+        </div>
+
+        <!-- Oyun kaydi / Game log -->
+        <details class="log" open>
+            <summary>@Language.T("table.gameLog")</summary>
+            <ul>
+                @foreach (var entry in Session.Log.Take(12))
+                {
+                    <li>@Language.LogText(entry)</li>
+                }
+            </ul>
+        </details>
+    </div>
+
+    <!-- Renk secim penceresi / Colour picker -->
+    @if (Session.PendingWildCard is not null)
+    {
+        <div class="modal-backdrop" @onclick="Session.CancelColorChoiceAsync">
+            <div class="modal" @onclick:stopPropagation="true">
+                <h2>@Language.T("table.chooseColor")</h2>
+                <div class="color-choices">
+                    @foreach (var color in new[] { CardColor.Red, CardColor.Yellow, CardColor.Green, CardColor.Blue })
+                    {
+                        <button class="color-btn"
+                                style="background: @ColorHex(color)"
+                                @onclick="() => Session.ChooseColorAsync(color)">
+                            @Strings.Color(color, Language.Current)
+                        </button>
+                    }
+                </div>
+                <button class="btn ghost" @onclick="Session.CancelColorChoiceAsync">@Language.T("table.cancel")</button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private string _playerName = "";
+    private int _botCount = 3;
+
+    protected override void OnInitialized()
+    {
+        Session.StateChanged += OnStateChangedAsync;
+        Language.Changed += OnLanguageChanged;
+    }
+
+    private Task StartGame() => Session.StartNewGameAsync(_playerName, _botCount);
+
+    private Task Reset() => Session.StartNewGameAsync(_playerName, _botCount);
+
+    /// <summary>
+    /// Bot hamleleri arka planda islediginden, arayuzu Blazor'un
+    /// senkronizasyon baglaminda guncellemek zorundayiz.
+    /// </summary>
+    private Task OnStateChangedAsync() => InvokeAsync(StateHasChanged);
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    private static string ColorHex(CardColor color) => color switch
+    {
+        CardColor.Red => "#d63447",
+        CardColor.Yellow => "#e8b800",
+        CardColor.Green => "#2e9e4f",
+        CardColor.Blue => "#2d6fd6",
+        _ => "#3a3a3a"
+    };
+
+    public void Dispose()
+    {
+        Session.StateChanged -= OnStateChangedAsync;
+        Language.Changed -= OnLanguageChanged;
+    }
+}

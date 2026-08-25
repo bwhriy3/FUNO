@@ -1,4 +1,4 @@
-# RenkKapis
+# fUNO
 
 UNO benzeri kart oyunu. Yazilim Proje Yonetimi dersi donem projesi.
 
@@ -14,16 +14,16 @@ UNO benzeri kart oyunu. Yazilim Proje Yonetimi dersi donem projesi.
 ## Mimari
 
 ```
-src/RenkKapis.Core/         Kural motoru - UI ve ag bilmez, %100 test edilebilir
+src/Funo.Core/         Kural motoru - UI ve ag bilmez, %100 test edilebilir
     Model/                  Card, Deck, Player, GameState, GameOptions
     Engine/                 GameEngine (kural mantigi), PlayResult
     Ai/                     SimpleBot (bot stratejisi)
-src/RenkKapis.ConsoleSim/   Bot simulasyonu (Sprint 1 dogrulamasi)
-src/RenkKapis.Web/          Blazor Web App (InteractiveServer)
+src/Funo.ConsoleSim/   Bot simulasyonu (Sprint 1 dogrulamasi)
+src/Funo.Web/          Blazor Web App (InteractiveServer)
     Services/GameSession    Sira orkestrasyonu, insan + bot oturumu
     Components/Game/        CardView (kartlar tamamen CSS ile cizilir)
     Components/Pages/Game   Ana oyun ekrani
-tests/RenkKapis.Core.Tests/ Birim + butunlesme testleri
+tests/Funo.Core.Tests/ Birim + butunlesme testleri
 ```
 
 Temel tasarim karari: **kural motoru hicbir seye bagimli degildir.**
@@ -53,15 +53,15 @@ Testler:
 
 Web arayuzu (tarayicida http://localhost:5193):
 
-    dotnet run --project src/RenkKapis.Web --launch-profile http
+    dotnet run --project src/Funo.Web --launch-profile http
 
 Bot simulasyonu (4 bot birbirine karsi tam oyun):
 
-    dotnet run --project src/RenkKapis.ConsoleSim
+    dotnet run --project src/Funo.ConsoleSim
 
 Ayni oyunu tekrar uretmek icin tohum verilebilir:
 
-    dotnet run --project src/RenkKapis.ConsoleSim -- 42
+    dotnet run --project src/Funo.ConsoleSim -- 42
 
 ## Sprint durumu
 

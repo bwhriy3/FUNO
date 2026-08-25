@@ -1,0 +1,434 @@
+@page "/multiplayer"
+@rendermode InteractiveServer
+
+@using Funo.Core.Model
+@using Funo.Web.Components.Game
+@using Funo.Web.Contracts
+@using Funo.Web.Localization
+@using Microsoft.AspNetCore.SignalR
+@using Microsoft.AspNetCore.SignalR.Client
+
+@implements IAsyncDisposable
+@inject LanguageState Language
+@inject NavigationManager Nav
+
+<PageTitle>fUNO — @Language.T("mp.title")</PageTitle>
+
+@if (_view is null)
+{
+    <!-- Lobi girisi / Lobby entry -->
+    <div class="setup">
+        <div class="setup-top">
+            <h1>fUNO</h1>
+            <LanguageSwitch />
+        </div>
+        <p class="tagline">@Language.T("mp.title")</p>
+
+        <label>
+            @Language.T("setup.name")
+            <input type="text" @bind="_playerName" maxlength="16"
+                   placeholder="@Language.T("setup.namePlaceholder")" />
+        </label>
+
+        <button class="btn primary" disabled="@_busy" @onclick="CreateRoom">
+            @Language.T("mp.createRoom")
+        </button>
+
+        <label>
+            @Language.T("mp.roomCode")
+            <input type="text" @bind="_roomCode" maxlength="5"
+                   style="text-transform: uppercase" placeholder="ABC12" />
+        </label>
+
+        <button class="btn" disabled="@_busy" @onclick="JoinRoom">@Language.T("mp.joinRoom")</button>
+
+        @if (_error is not null)
+        {
+            <div class="error-box" role="alert">@_error</div>
+        }
+
+        <button class="btn ghost" @onclick="@(() => Nav.NavigateTo("/"))">@Language.T("mp.back")</button>
+    </div>
+}
+else if (!_view.IsStarted)
+{
+    <!-- Oda lobisi / Room lobby -->
+    <div class="setup">
+        <div class="setup-top">
+            <h1>@Language.T("mp.roomCodeIs", _view.RoomCode)</h1>
+            <LanguageSwitch />
+        </div>
+        <p class="tagline">@Language.T("mp.shareCode")</p>
+
+        <div class="lobby-players">
+            <div class="pile-label">@Language.T("mp.playersInRoom")</div>
+            <ul>
+                @foreach (var p in _view.Players)
+                {
+                    <li>
+                        @p.Name
+                        @if (p.Name == _view.HostName)
+                        {
+                            <span class="tag">@Language.T("mp.host")</span>
+                        }
+                        @if (p.Name == _view.YouAre)
+                        {
+                            <span class="tag you">@Language.T("mp.you")</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+
+        @if (_view.YouAre == _view.HostName)
+        {
+            <label>
+                @Language.T("mp.fillWithBots")
+                <select @bind="_botCount">
+                    @for (int i = 0; i <= 3; i++)
+                    {
+                        int n = i;
+                        <option value="@n">@Language.T("setup.bots", n)</option>
+                    }
+                </select>
+            </label>
+
+            <button class="btn primary" @onclick="StartGame">@Language.T("mp.startGame")</button>
+        }
+        else
+        {
+            <p class="thinking">@Language.T("mp.waiting")</p>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="error-box" role="alert">@_error</div>
+        }
+
+        <button class="btn ghost" @onclick="LeaveRoom">@Language.T("mp.leave")</button>
+    </div>
+}
+else
+{
+    <!-- Masa / Table -->
+    <div class="table">
+
+        <div class="table-top">
+            <span class="room-tag">@Language.T("mp.roomCodeIs", _view.RoomCode)</span>
+            <LanguageSwitch />
+        </div>
+
+        <div class="opponents">
+            @foreach (var p in _view.Players.Where(p => p.Name != _view.YouAre))
+            {
+                <div class="opponent @(p.Name == _view.CurrentPlayerName && !_view.IsFinished ? "active" : "")">
+                    <div class="opponent-name">
+                        @p.Name
+                        @if (p.CardCount == 1)
+                        {
+                            <span class="uno-badge">@Language.T("table.unoBadge")</span>
+                        }
+                        @if (!p.IsConnected && !p.IsBot)
+                        {
+                            <span class="tag offline">@Language.T("mp.disconnected")</span>
+                        }
+                    </div>
+                    <div class="opponent-cards">
+                        @for (int i = 0; i < Math.Min(p.CardCount, 8); i++)
+                        {
+                            <CardView FaceDown="true" Size="sm" />
+                        }
+                    </div>
+                    <div class="opponent-count">@Language.T("table.cards", p.CardCount)</div>
+                </div>
+            }
+        </div>
+
+        <div class="center">
+            <div class="pile">
+                <div class="pile-label">@Language.T("table.deck")</div>
+                <CardView FaceDown="true" Size="lg" />
+                <div class="pile-count">@_view.DrawPileCount</div>
+            </div>
+
+            <div class="active-color" style="background: @ColorHex(_view.ActiveColor)">
+                <span>@Language.T("table.activeColor")</span>
+                <strong>@Strings.Color(_view.ActiveColor, Language.Current)</strong>
+            </div>
+
+            <div class="pile">
+                <div class="pile-label">@Language.T("table.topCard")</div>
+                <CardView Card="_view.TopCard?.ToCard()" Size="lg" />
+                @if (_view.PendingDrawCount > 0)
+                {
+                    <div class="penalty">@Language.T("table.penalty", _view.PendingDrawCount)</div>
+                }
+            </div>
+        </div>
+
+        <div class="status">
+            @if (_view.IsFinished)
+            {
+                <strong class="winner">
+                    @(_view.WinnerName == _view.YouAre
+                        ? Language.T("table.youWon")
+                        : Language.T("table.winner", _view.WinnerName ?? ""))
+                </strong>
+            }
+            else if (_view.IsYourTurn)
+            {
+                <strong class="your-turn">@Language.T("table.yourTurn")</strong>
+                @if (_view.PendingDrawCount > 0 && !_view.YourPlayable.Any(x => x))
+                {
+                    <span> @Language.T("table.mustDraw", _view.PendingDrawCount)</span>
+                }
+            }
+            else
+            {
+                <span class="thinking">@Language.T("table.waitingFor", _view.CurrentPlayerName ?? "")</span>
+            }
+        </div>
+
+        <div class="hand-area">
+            <div class="hand-header">
+                <span>@_view.YouAre — @Language.T("table.cards", _view.YourHand.Count)</span>
+
+                <div class="actions">
+                    @if (_view.YourHand.Count == 2 && _view.IsYourTurn && !MeCalledUno)
+                    {
+                        <button class="btn uno" @onclick="CallUno">@Language.T("table.callUno")</button>
+                    }
+
+                    @if (_view.DrawnPlayableCard is not null)
+                    {
+                        <span class="drawn-hint">
+                            @Language.T("table.drawnHint",
+                                Strings.Card(_view.DrawnPlayableCard.ToCard(), Language.Current))
+                        </span>
+                        <button class="btn" @onclick="PassAfterDraw">@Language.T("table.pass")</button>
+                    }
+                    else if (_view.IsYourTurn && !_view.IsFinished)
+                    {
+                        <button class="btn" @onclick="DrawCard">
+                            @(_view.PendingDrawCount > 0
+                                ? Language.T("table.drawN", _view.PendingDrawCount)
+                                : Language.T("table.drawCard"))
+                        </button>
+                    }
+
+                    <button class="btn ghost" @onclick="LeaveRoom">@Language.T("mp.leave")</button>
+                </div>
+            </div>
+
+            <div class="hand">
+                @for (int i = 0; i < _view.YourHand.Count; i++)
+                {
+                    var dto = _view.YourHand[i];
+                    bool playable = i < _view.YourPlayable.Count && _view.YourPlayable[i];
+
+                    <CardView Card="dto.ToCard()"
+                              Playable="playable"
+                              Dimmed="@(!playable)"
+                              OnClick="@(_ => OnCardClicked(dto))" />
+                }
+            </div>
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="error-box" role="alert">@_error</div>
+        }
+
+        <details class="log" open>
+            <summary>@Language.T("table.gameLog")</summary>
+            <ul>
+                @foreach (var entry in _view.Log.Take(12))
+                {
+                    <li>@Language.LogText(entry)</li>
+                }
+            </ul>
+        </details>
+    </div>
+
+    @if (_pendingWild is not null)
+    {
+        <div class="modal-backdrop" @onclick="@(() => { _pendingWild = null; })">
+            <div class="modal" @onclick:stopPropagation="true">
+                <h2>@Language.T("table.chooseColor")</h2>
+                <div class="color-choices">
+                    @foreach (var color in new[] { CardColor.Red, CardColor.Yellow, CardColor.Green, CardColor.Blue })
+                    {
+                        var c = color;
+                        <button class="color-btn" style="background: @ColorHex(c)"
+                                @onclick="@(() => PlayWild(c))">
+                            @Strings.Color(c, Language.Current)
+                        </button>
+                    }
+                </div>
+                <button class="btn ghost" @onclick="@(() => { _pendingWild = null; })">
+                    @Language.T("table.cancel")
+                </button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    private HubConnection? _hub;
+    private GameView? _view;
+    private CardDto? _pendingWild;
+    private string _playerName = "";
+    private string _roomCode = "";
+    private int _botCount = 0;
+    private string? _error;
+    private bool _busy;
+
+    private bool MeCalledUno =>
+        _view?.Players.FirstOrDefault(p => p.Name == _view.YouAre)?.HasCalledUno ?? false;
+
+    protected override void OnInitialized() => Language.Changed += OnLanguageChanged;
+
+    /// <summary>Hub baglantisini kurar. Ilk kullanimda cagrilir.</summary>
+    private async Task<HubConnection> EnsureHubAsync()
+    {
+        if (_hub is not null)
+            return _hub;
+
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/gamehub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<GameView>("GameUpdated", view =>
+        {
+            _view = view;
+            _error = null;
+            return InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<string>("Error", key =>
+        {
+            _error = Language.T(key);
+            return InvokeAsync(StateHasChanged);
+        });
+
+        await _hub.StartAsync();
+        return _hub;
+    }
+
+    private async Task CreateRoom()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _error = Language.T("room.nameEmpty");
+            return;
+        }
+
+        await RunAsync(async hub => await hub.InvokeAsync<string>("CreateRoom", _playerName));
+    }
+
+    private async Task JoinRoom()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _error = Language.T("room.nameEmpty");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_roomCode))
+        {
+            _error = Language.T("room.codeEmpty");
+            return;
+        }
+
+        await RunAsync(hub => hub.InvokeAsync("JoinRoom", _roomCode.Trim().ToUpperInvariant(), _playerName));
+    }
+
+    private Task StartGame() => RunAsync(hub => hub.InvokeAsync("StartGame", _botCount));
+
+    private Task DrawCard() => RunAsync(hub => hub.InvokeAsync("DrawCard"));
+
+    private Task PassAfterDraw() => RunAsync(hub => hub.InvokeAsync("PassAfterDraw"));
+
+    private Task CallUno() => RunAsync(hub => hub.InvokeAsync("CallUno"));
+
+    private Task OnCardClicked(CardDto dto)
+    {
+        // Joker ise once renk secilmeli / wild cards need a colour first
+        if (dto.Type is CardType.Wild or CardType.WildDrawFour)
+        {
+            _pendingWild = dto;
+            return Task.CompletedTask;
+        }
+
+        return RunAsync(hub => hub.InvokeAsync("PlayCard", dto, (CardColor?)null));
+    }
+
+    private Task PlayWild(CardColor color)
+    {
+        var card = _pendingWild;
+        _pendingWild = null;
+
+        return card is null
+            ? Task.CompletedTask
+            : RunAsync(hub => hub.InvokeAsync("PlayCard", card, (CardColor?)color));
+    }
+
+    private async Task LeaveRoom()
+    {
+        if (_hub is not null)
+        {
+            await _hub.DisposeAsync();
+            _hub = null;
+        }
+
+        _view = null;
+        _pendingWild = null;
+        _error = null;
+    }
+
+    /// <summary>Hub cagrilarini ortak hata yakalama ile calistirir.</summary>
+    private async Task RunAsync(Func<HubConnection, Task> action)
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var hub = await EnsureHubAsync();
+            await action(hub);
+        }
+        catch (HubException ex)
+        {
+            // Sunucu ceviri anahtari gonderir; metni istemci uretir
+            _error = Language.T(ex.Message.Split(": ").Last());
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    private static string ColorHex(CardColor color) => color switch
+    {
+        CardColor.Red => "#d63447",
+        CardColor.Yellow => "#e8b800",
+        CardColor.Green => "#2e9e4f",
+        CardColor.Blue => "#2d6fd6",
+        _ => "#3a3a3a"
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        Language.Changed -= OnLanguageChanged;
+
+        if (_hub is not null)
+            await _hub.DisposeAsync();
+    }
+}
