@@ -14,9 +14,18 @@ else if (Card is not null)
             title="@Strings.Card(Card, Language.Current)"
             aria-label="@Strings.Card(Card, Language.Current)"
             @onclick="HandleClick">
-        <span class="card-corner top">@Symbol</span>
-        <span class="card-center">@Symbol</span>
-        <span class="card-corner bottom">@Symbol</span>
+        <span class="card-corner top">@CornerLabel</span>
+        <span class="card-center">
+            @if (Card.Type == CardType.Number)
+            {
+                @Card.Value
+            }
+            else
+            {
+                @IconMarkup
+            }
+        </span>
+        <span class="card-corner bottom">@CornerLabel</span>
     </button>
 }
 
@@ -53,17 +62,51 @@ else if (Card is not null)
         _ => "c-wild"
     };
 
-    /// <summary>Kartin uzerinde gorunen sembol.</summary>
-    private string Symbol => Card is null ? "" : Card.Type switch
+    /// <summary>Kose etiketi: kisa metin. Sembolik kartlarda ikon merkeze cizilir.</summary>
+    private string CornerLabel => Card is null ? "" : Card.Type switch
     {
         CardType.Number => Card.Value!.Value.ToString(),
-        CardType.Skip => "⃠",        // uzeri cizili daire
-        CardType.Reverse => "⇄",     // cift yonlu ok
+        CardType.Skip => "Ø",       // O with stroke - yasak isareti
+        CardType.Reverse => "⇄",    // cift yonlu ok
         CardType.DrawTwo => "+2",
-        CardType.Wild => "✦",        // yildiz
+        CardType.Wild => "✦",       // dort kollu yildiz
         CardType.WildDrawFour => "+4",
         _ => "?"
     };
+
+    /// <summary>
+    /// Aksiyon kartlarinin ortasindaki ikon.
+    /// Unicode sembolleri yerine SVG kullaniliyor: isletim sistemleri arasinda
+    /// tutarli cizilir ve yazi tipine bagimli degildir.
+    /// </summary>
+    private RenderFragment IconMarkup => builder =>
+    {
+        string path = Card!.Type switch
+        {
+            CardType.Skip => SkipIcon,
+            CardType.Reverse => ReverseIcon,
+            CardType.DrawTwo => PlusTwoIcon,
+            CardType.WildDrawFour => PlusFourIcon,
+            _ => WildIcon
+        };
+
+        builder.AddMarkupContent(0, path);
+    };
+
+    private const string SkipIcon =
+        """<svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>""";
+
+    private const string ReverseIcon =
+        """<svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16,4 20,8 16,12"/><path d="M20 8H7a3 3 0 0 0-3 3v1"/><polyline points="8,20 4,16 8,12"/><path d="M4 16h13a3 3 0 0 0 3-3v-1"/></svg>""";
+
+    private const string PlusTwoIcon =
+        """<span class="card-plus">+2</span>""";
+
+    private const string PlusFourIcon =
+        """<span class="card-plus">+4</span>""";
+
+    private const string WildIcon =
+        """<svg class="card-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.6 6.6L21 11l-6.4 2.4L12 20l-2.6-6.6L3 11l6.4-2.4z"/></svg>""";
 
     private async Task HandleClick()
     {

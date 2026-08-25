@@ -1,15 +1,66 @@
-:root {
-    --felt: #12603f;
-    --felt-dark: #0d4a30;
-    --panel: rgba(0, 0, 0, .28);
-    --radius: 10px;
+/* =========================================================================
+   fUNO design system
+   Palette: felt green + gold on dark. Type: Fredoka (display) / Nunito (UI).
+   All colours are semantic tokens - no raw hex inside components.
+   ========================================================================= */
 
-    --c-red: #d63447;
-    --c-yellow: #e8b800;
-    --c-green: #2e9e4f;
-    --c-blue: #2d6fd6;
-    --c-wild: #2f2f38;
-    --accent: #ffd84d;
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap');
+
+:root {
+    /* --- Surfaces --- */
+    --color-background: #0f172a;
+    --color-felt: #15803d;
+    --color-felt-deep: #0b3d24;
+    --color-card-surface: #192134;
+    --color-panel: rgba(9, 20, 15, .38);
+    --color-panel-strong: rgba(9, 20, 15, .62);
+
+    /* --- Text --- */
+    --color-foreground: #ffffff;
+    --color-muted-foreground: #b8c4d0;
+
+    /* --- Accent / state --- */
+    --color-accent: #f5c542;
+    --color-on-accent: #12100a;
+    --color-destructive: #dc2626;
+    --color-on-destructive: #ffffff;
+    --color-border: rgba(255, 255, 255, .14);
+    --color-ring: #f5c542;
+
+    /* --- Play card colours --- */
+    --card-red: #d33646;
+    --card-yellow: #e8b400;
+    --card-green: #2f9e4f;
+    --card-blue: #2f6fd0;
+    --card-wild: #23232c;
+
+    /* --- Spacing scale (standard density) --- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+    --space-6: 48px;
+
+    /* --- Radii --- */
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 16px;
+
+    /* --- Elevation --- */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, .3);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, .35);
+    --shadow-3: 0 12px 28px rgba(0, 0, 0, .45);
+
+    /* --- Motion tokens: distance and importance decide duration --- */
+    --motion-instant: 90ms;
+    --motion-quick: 180ms;
+    --motion-move: 260ms;
+    --ease-out: cubic-bezier(.22, .61, .36, 1);
+
+    /* --- Type --- */
+    --font-display: "Fredoka", "Segoe UI", system-ui, sans-serif;
+    --font-ui: "Nunito", "Segoe UI", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -17,147 +68,190 @@
 html, body {
     margin: 0;
     min-height: 100%;
-    font-family: "Segoe UI", system-ui, sans-serif;
-    color: #fff;
-    background: radial-gradient(ellipse at center, var(--felt) 0%, var(--felt-dark) 100%);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--color-foreground);
+    background:
+        radial-gradient(ellipse 90% 70% at 50% 40%, var(--color-felt) 0%, var(--color-felt-deep) 55%, var(--color-background) 100%);
     background-attachment: fixed;
 }
 
-/* ---------- Kurulum ekrani ---------- */
-
-.setup {
-    max-width: 380px;
-    margin: 10vh auto;
-    padding: 2rem;
-    background: var(--panel);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+h1, h2, .card, .uno-badge, .lang-btn {
+    font-family: var(--font-display);
 }
 
-.setup h1 { margin: 0; font-size: 2.4rem; letter-spacing: -.02em; }
-.setup .tagline { margin: -.75rem 0 .5rem; opacity: .7; font-size: .9rem; }
+/* ---------- Setup / lobby ---------- */
+
+.setup {
+    max-width: 400px;
+    margin: 8vh auto;
+    padding: var(--space-4);
+    background: var(--color-panel-strong);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.setup h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 6vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.setup .tagline {
+    margin: calc(-1 * var(--space-2)) 0 0;
+    color: var(--color-muted-foreground);
+    font-size: .9rem;
+}
 
 .setup label {
     display: flex;
     flex-direction: column;
-    gap: .35rem;
+    gap: var(--space-1);
     font-size: .85rem;
-    opacity: .85;
+    font-weight: 600;
+    color: var(--color-muted-foreground);
 }
 
 .setup input, .setup select {
-    padding: .6rem .75rem;
-    border: 1px solid rgba(255, 255, 255, .25);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, .1);
-    color: #fff;
+    padding: .65rem .75rem;
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .08);
+    color: var(--color-foreground);
+    font-family: inherit;
     font-size: 1rem;
+    transition: border-color var(--motion-quick) var(--ease-out);
 }
 
-/* ---------- Masa ---------- */
+.setup input:focus-visible, .setup select:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-color: var(--color-ring);
+}
+
+/* ---------- Table ---------- */
 
 .table {
-    max-width: 1000px;
+    max-width: 1040px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: var(--space-3);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-3);
 }
 
 .opponents {
     display: flex;
     justify-content: center;
-    gap: 1.5rem;
+    gap: var(--space-3);
     flex-wrap: wrap;
 }
 
 .opponent {
-    padding: .6rem .9rem;
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius);
-    background: var(--panel);
+    background: var(--color-panel);
     border: 2px solid transparent;
     text-align: center;
-    transition: border-color .2s, transform .2s;
+    transition:
+        border-color var(--motion-quick) var(--ease-out),
+        transform var(--motion-quick) var(--ease-out);
 }
 
 .opponent.active {
-    border-color: var(--accent);
+    border-color: var(--color-accent);
     transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
 }
 
-.opponent-name { font-weight: 600; font-size: .9rem; margin-bottom: .4rem; }
-.opponent-count { font-size: .75rem; opacity: .7; margin-top: .3rem; }
+.opponent-name { font-weight: 700; font-size: .9rem; margin-bottom: var(--space-1); }
+
+.opponent-count {
+    font-size: .75rem;
+    color: var(--color-muted-foreground);
+    margin-top: var(--space-1);
+}
 
 .opponent-cards { display: flex; justify-content: center; }
 .opponent-cards > * { margin-left: -14px; }
 .opponent-cards > *:first-child { margin-left: 0; }
 
 .uno-badge {
-    background: var(--accent);
-    color: #000;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
     font-size: .65rem;
     font-weight: 700;
-    padding: .1rem .35rem;
-    border-radius: 4px;
-    margin-left: .35rem;
+    padding: .1rem .4rem;
+    border-radius: var(--radius-sm);
+    margin-left: var(--space-1);
     vertical-align: middle;
 }
 
-/* ---------- Masa ortasi ---------- */
+/* ---------- Table centre ---------- */
 
 .center {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    padding: 1.5rem 0;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
 }
 
 .pile { text-align: center; position: relative; }
-.pile-label { font-size: .7rem; opacity: .6; margin-bottom: .4rem; }
-.pile-count { font-size: .75rem; opacity: .7; margin-top: .4rem; }
+
+.pile-label {
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-1);
+}
+
+.pile-count { font-size: .75rem; color: var(--color-muted-foreground); margin-top: var(--space-1); }
 
 .penalty {
-    margin-top: .4rem;
+    margin-top: var(--space-1);
     font-size: .8rem;
     font-weight: 700;
-    color: var(--accent);
+    color: var(--color-accent);
 }
 
 .active-color {
-    padding: .8rem 1.1rem;
+    padding: var(--space-3);
     border-radius: var(--radius);
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: .2rem;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .18);
+    gap: 2px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .18), var(--shadow-2);
+    transition: background var(--motion-move) var(--ease-out);
 }
 
-.active-color span { font-size: .65rem; opacity: .85; }
-.active-color strong { font-size: 1rem; }
+.active-color span { font-size: .65rem; text-transform: uppercase; letter-spacing: .04em; opacity: .9; }
+.active-color strong { font-size: 1rem; font-family: var(--font-display); }
 
-/* ---------- Durum ---------- */
+/* ---------- Status ---------- */
 
-.status {
-    text-align: center;
-    min-height: 1.5rem;
-    font-size: .95rem;
-}
+.status { text-align: center; min-height: 1.6rem; font-size: .95rem; }
+.your-turn { color: var(--color-accent); font-family: var(--font-display); }
+.winner { color: var(--color-accent); font-size: 1.4rem; font-family: var(--font-display); }
+.thinking { color: var(--color-muted-foreground); font-style: italic; }
 
-.your-turn { color: var(--accent); }
-.winner { color: var(--accent); font-size: 1.3rem; }
-.thinking { opacity: .65; font-style: italic; }
-
-/* ---------- El ---------- */
+/* ---------- Hand ---------- */
 
 .hand-area {
-    background: var(--panel);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: .9rem;
+    padding: var(--space-3);
 }
 
 .hand-header {
@@ -165,72 +259,89 @@ html, body {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: .5rem;
-    margin-bottom: .75rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
     font-size: .9rem;
+    font-weight: 600;
 }
 
-.actions { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
-.drawn-hint { font-size: .8rem; color: var(--accent); }
+.actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.drawn-hint { font-size: .8rem; color: var(--color-accent); }
 
 .hand {
     display: flex;
     flex-wrap: wrap;
-    gap: .5rem;
+    gap: var(--space-2);
     justify-content: center;
     min-height: 110px;
 }
 
-/* ---------- Kart ---------- */
+/* ---------- Card ---------- */
 
 .card {
     width: 66px;
     height: 96px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     border: 3px solid #fff;
-    background: var(--c-wild);
+    background: var(--card-wild);
     color: #fff;
     position: relative;
     padding: 0;
-    font-family: inherit;
+    font-family: var(--font-display);
     cursor: default;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, .35);
-    transition: transform .15s, box-shadow .15s;
+    box-shadow: var(--shadow-1);
+    transition:
+        transform var(--motion-quick) var(--ease-out),
+        box-shadow var(--motion-quick) var(--ease-out);
     flex-shrink: 0;
 }
 
-.card-sm { width: 34px; height: 50px; border-width: 2px; border-radius: 5px; }
-.card-lg { width: 82px; height: 118px; }
+.card-sm { width: 34px; height: 50px; border-width: 2px; border-radius: var(--radius-sm); }
+.card-lg { width: 84px; height: 122px; }
 
-.card.c-red    { background: var(--c-red); }
-.card.c-yellow { background: var(--c-yellow); color: #3a2f00; }
-.card.c-green  { background: var(--c-green); }
-.card.c-blue   { background: var(--c-blue); }
+.card.c-red    { background: var(--card-red); }
+.card.c-yellow { background: var(--card-yellow); color: #3a2f00; }
+.card.c-green  { background: var(--card-green); }
+.card.c-blue   { background: var(--card-blue); }
 
 .card.c-wild {
-    background: conic-gradient(var(--c-red) 0 25%, var(--c-yellow) 0 50%,
-                               var(--c-green) 0 75%, var(--c-blue) 0);
+    background: conic-gradient(var(--card-red) 0 25%, var(--card-yellow) 0 50%,
+                               var(--card-green) 0 75%, var(--card-blue) 0);
 }
 
 .card-center {
-    font-size: 1.7rem;
+    font-size: 1.75rem;
     font-weight: 700;
     line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     /* Joker kartlarda renkli zemin uzerinde okunakli kalmasi icin */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
 }
 
 .card-lg .card-center { font-size: 2.1rem; }
 
+/* SVG ikonlar yazi tipinden bagimsiz cizilir */
+.card-icon {
+    width: 30px;
+    height: 30px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+}
+
+.card-lg .card-icon { width: 38px; height: 38px; }
+.card-plus { font-size: 1.6rem; font-weight: 700; }
+.card-lg .card-plus { font-size: 2rem; }
+
 .card-corner {
     position: absolute;
     font-size: .7rem;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
-    opacity: .9;
+    opacity: .92;
 }
 
 .card-corner.top { top: 5px; left: 6px; }
@@ -239,199 +350,274 @@ html, body {
 
 .card.playable {
     cursor: pointer;
-    box-shadow: 0 0 0 2px var(--accent), 0 4px 10px rgba(0, 0, 0, .4);
+    box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-2);
 }
 
 .card.playable:hover {
     transform: translateY(-10px);
-    box-shadow: 0 0 0 2px var(--accent), 0 10px 18px rgba(0, 0, 0, .45);
+    box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-3);
 }
 
 .card.playable:focus-visible {
     outline: 3px solid #fff;
     outline-offset: 2px;
+    transform: translateY(-6px);
 }
 
-.card.dimmed { opacity: .45; }
+.card.dimmed { opacity: .42; }
 
 .card-back {
-    background: repeating-linear-gradient(45deg, #1b2a4a 0 6px, #2a3f6b 6px 12px);
+    background:
+        repeating-linear-gradient(45deg, #16213f 0 6px, #24365e 6px 12px);
     border-color: #fff;
 }
 
-/* ---------- Butonlar ---------- */
+/* ---------- Buttons ---------- */
 
 .btn {
-    padding: .5rem .9rem;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, .3);
-    background: rgba(255, 255, 255, .12);
-    color: #fff;
-    font-size: .85rem;
-    font-family: inherit;
+    padding: .55rem 1rem;
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, .1);
+    color: var(--color-foreground);
+    font-size: .875rem;
+    font-family: var(--font-ui);
+    font-weight: 600;
     cursor: pointer;
-    transition: background .15s;
+    transition: background var(--motion-quick) var(--ease-out),
+                transform var(--motion-instant) var(--ease-out);
 }
 
-.btn:hover { background: rgba(255, 255, 255, .22); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn:hover:not(:disabled) { background: rgba(255, 255, 255, .2); }
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
 
 .btn.primary {
-    background: var(--accent);
-    color: #1b1b1b;
-    border-color: var(--accent);
-    font-weight: 600;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+    font-weight: 700;
     font-size: 1rem;
-    padding: .7rem;
+    font-family: var(--font-display);
 }
 
-.btn.primary:hover { background: #ffe27a; }
+.btn.primary:hover:not(:disabled) { background: #ffd869; }
 
 .btn.uno {
-    background: var(--accent);
-    color: #1b1b1b;
-    border-color: var(--accent);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
     font-weight: 700;
-    animation: pulse 1.2s infinite;
+    font-family: var(--font-display);
+    animation: pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.07); }
+    50% { transform: scale(1.06); }
 }
 
-.btn.ghost { background: transparent; opacity: .7; }
+.btn.ghost { background: transparent; color: var(--color-muted-foreground); }
+.btn.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, .08); color: var(--color-foreground); }
 
-/* ---------- Oyun kaydi ---------- */
+/* ---------- Game log ---------- */
 
 .log {
-    background: var(--panel);
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: .6rem .9rem;
+    padding: var(--space-2) var(--space-3);
     font-size: .8rem;
 }
 
-.log summary { cursor: pointer; opacity: .75; }
+.log summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-muted-foreground);
+    min-height: 24px;
+}
+
+.log summary:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 
 .log ul {
     list-style: none;
     padding: 0;
-    margin: .6rem 0 0;
+    margin: var(--space-2) 0 0;
     max-height: 150px;
     overflow-y: auto;
 }
 
 .log li {
-    padding: .2rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
-    opacity: .85;
+    padding: .25rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+    color: var(--color-muted-foreground);
 }
 
-/* ---------- Renk secim penceresi ---------- */
+.log li:first-child { color: var(--color-foreground); font-weight: 600; }
+
+/* ---------- Colour picker modal ---------- */
 
 .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .6);
+    background: rgba(0, 0, 0, .65);
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: var(--space-3);
     z-index: 100;
 }
 
 .modal {
-    background: #1e2a24;
-    padding: 1.5rem;
-    border-radius: var(--radius);
+    background: var(--color-card-surface);
+    border: 1px solid var(--color-border);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
     text-align: center;
-    min-width: 300px;
+    min-width: min(320px, 100%);
 }
 
-.modal h2 { margin: 0 0 1rem; font-size: 1.2rem; }
+.modal h2 { margin: 0 0 var(--space-3); font-size: 1.25rem; }
 
 .color-choices {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: .6rem;
-    margin-bottom: 1rem;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
 .color-btn {
     padding: 1.1rem .5rem;
-    border: 2px solid rgba(255, 255, 255, .3);
-    border-radius: 8px;
+    min-height: 64px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius);
     color: #fff;
-    font-weight: 600;
-    font-family: inherit;
-    font-size: .9rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: .95rem;
     cursor: pointer;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+    transition: border-color var(--motion-quick) var(--ease-out),
+                transform var(--motion-instant) var(--ease-out);
 }
 
 .color-btn:hover { border-color: #fff; }
+.color-btn:active { transform: scale(.97); }
 .color-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
-/* ---------- Kucuk ekran ---------- */
+/* ---------- Language switch ---------- */
 
-@media (max-width: 600px) {
-    .center { gap: 1rem; }
-    .card { width: 54px; height: 78px; }
-    .card-lg { width: 66px; height: 96px; }
-    .card-center { font-size: 1.4rem; }
-    .hand { gap: .35rem; }
-}
-
-/* ---------- Dil secici / Language switch ---------- */
-
-.lang-switch { display: flex; gap: .25rem; }
+.lang-switch { display: flex; gap: var(--space-1); flex-shrink: 0; }
 
 .lang-btn {
-    padding: .25rem .5rem;
-    border: 1px solid rgba(255, 255, 255, .3);
-    border-radius: 5px;
+    min-width: 40px;
+    min-height: 32px;
+    padding: .3rem .55rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
     background: transparent;
-    color: #fff;
-    font-size: .72rem;
+    color: var(--color-muted-foreground);
+    font-size: .75rem;
     font-weight: 600;
-    font-family: inherit;
     cursor: pointer;
-    opacity: .6;
+    transition: background var(--motion-quick) var(--ease-out);
 }
 
-.lang-btn.active { background: var(--accent); color: #1b1b1b; border-color: var(--accent); opacity: 1; }
-.lang-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.lang-btn:hover { background: rgba(255, 255, 255, .1); color: var(--color-foreground); }
+
+.lang-btn.active {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+}
+
+.lang-btn:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
 
 .setup-top, .table-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-3);
 }
 
-.table-top { margin-bottom: -.5rem; }
-.room-tag { font-size: .8rem; opacity: .75; }
+.room-tag { font-size: .8rem; color: var(--color-muted-foreground); font-weight: 600; }
 
-/* ---------- Cok oyunculu lobi / Multiplayer lobby ---------- */
+/* ---------- Multiplayer lobby ---------- */
 
-.lobby-players { background: rgba(0, 0, 0, .2); border-radius: 8px; padding: .7rem .9rem; }
-.lobby-players ul { list-style: none; padding: 0; margin: .5rem 0 0; }
-.lobby-players li { padding: .25rem 0; font-size: .9rem; }
+.lobby-players {
+    background: rgba(0, 0, 0, .22);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-2) var(--space-3);
+}
+
+.lobby-players ul { list-style: none; padding: 0; margin: var(--space-2) 0 0; }
+
+.lobby-players li {
+    padding: .3rem 0;
+    font-size: .9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.lobby-players li:last-child { border-bottom: none; }
 
 .tag {
     font-size: .65rem;
-    padding: .1rem .35rem;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, .18);
-    margin-left: .35rem;
+    font-weight: 600;
+    padding: .12rem .4rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .16);
+    margin-left: var(--space-1);
     vertical-align: middle;
+    white-space: nowrap;
 }
 
-.tag.you { background: var(--accent); color: #1b1b1b; font-weight: 700; }
-.tag.offline { background: #8a3b3b; }
+.tag.you { background: var(--color-accent); color: var(--color-on-accent); font-weight: 700; }
+.tag.offline { background: var(--color-destructive); color: var(--color-on-destructive); }
 
 .error-box {
-    background: rgba(180, 40, 50, .85);
-    border-radius: 6px;
-    padding: .55rem .8rem;
+    background: var(--color-destructive);
+    color: var(--color-on-destructive);
+    border-radius: var(--radius-sm);
+    padding: .6rem .85rem;
     font-size: .85rem;
+    font-weight: 600;
+}
+
+/* ---------- Responsive: 375 / 768 / 1024 ---------- */
+
+@media (max-width: 768px) {
+    .center { gap: var(--space-3); padding: var(--space-3) 0; }
+    .opponents { gap: var(--space-2); }
+    .hand-header { font-size: .82rem; }
+}
+
+@media (max-width: 420px) {
+    .table { padding: var(--space-2); }
+    .card { width: 54px; height: 78px; border-width: 2px; }
+    .card-lg { width: 68px; height: 99px; }
+    .card-center { font-size: 1.4rem; }
+    .card-icon { width: 24px; height: 24px; }
+    .card-plus { font-size: 1.3rem; }
+    .hand { gap: var(--space-1); }
+    .setup { margin: var(--space-4) var(--space-2); }
+    .color-choices { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------- Motion preference ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    /* Hareket yerine sadece golge ile geri bildirim ver */
+    .card.playable:hover { transform: none; box-shadow: 0 0 0 3px var(--color-accent), var(--shadow-3); }
+    .opponent.active { transform: none; }
 }
