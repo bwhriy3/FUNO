@@ -17,7 +17,7 @@
 @if (_view is null)
 {
     <!-- Lobi girisi / Lobby entry -->
-    <div class="setup">
+    <div class="setup" lang="@Language.Code">
         <div class="setup-top">
             <h1>fUNO</h1>
             <LanguageSwitch />
@@ -53,7 +53,7 @@
 else if (!_view.IsStarted)
 {
     <!-- Oda lobisi / Room lobby -->
-    <div class="setup">
+    <div class="setup" lang="@Language.Code">
         <div class="setup-top">
             <h1>@Language.T("mp.roomCodeIs", _view.RoomCode)</h1>
             <LanguageSwitch />
@@ -111,7 +111,7 @@ else if (!_view.IsStarted)
 else
 {
     <!-- Masa / Table -->
-    <div class="table">
+    <div class="table" lang="@Language.Code">
 
         <div class="table-top">
             <span class="room-tag">@Language.T("mp.roomCodeIs", _view.RoomCode)</span>

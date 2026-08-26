@@ -24,6 +24,14 @@ public sealed class LanguageState
 
     public void Toggle() => Set(Current == Lang.Tr ? Lang.En : Lang.Tr);
 
+    /// <summary>
+    /// BCP-47 code for the current language, for the HTML lang attribute.
+    /// CSS text-transform:uppercase applies locale-specific casing rules
+    /// (Turkish i/İ) based on the nearest lang attribute, so UI text must
+    /// carry the right one - not just the static document lang.
+    /// </summary>
+    public string Code => Current == Lang.Tr ? "tr" : "en";
+
     /// <summary>Shorthand for translating a key in the current language.</summary>
     public string T(string key) => Strings.Get(key, Current);
 

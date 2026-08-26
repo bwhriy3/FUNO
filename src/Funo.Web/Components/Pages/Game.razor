@@ -16,7 +16,7 @@
 
 @if (Session.State is null)
 {
-    <div class="setup">
+    <div class="setup" lang="@Language.Code">
         <div class="setup-top">
             <h1>fUNO</h1>
             <LanguageSwitch />
@@ -50,7 +50,7 @@ else
 {
     var state = Session.State;
 
-    <div class="table">
+    <div class="table" lang="@Language.Code">
 
         <div class="table-top">
             <LanguageSwitch />

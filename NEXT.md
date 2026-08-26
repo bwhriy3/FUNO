@@ -1,29 +1,42 @@
-# Kaldigimiz yer / Where we left off  (2026-08-25)
+# Kaldigimiz yer / Where we left off  (2026-08-27)
 
 ## Tamamlanan
 - Sprint 0-1: kural motoru + 42 test (hepsi yesil)
 - Sprint 2: Blazor tek kisilik oyun (bota karsi), tarayicida dogrulandi
-- Yeniden adlandirma: RenkKapis -> fUNO (klasor, namespace, proje adlari)
-- TR/EN dil destegi: Localization/Strings.cs, LanguageState, LanguageSwitch
-  - Loglar yapisal (LogEntry: anahtar + parametre), ceviri ekranda yapiliyor
-  - Core artik metin uretmiyor, sadece anahtar doner (EngineMessages)
-- UI tasarim sistemi: semantik token'lar, Fredoka/Nunito, SVG kart ikonlari,
-  prefers-reduced-motion, 44px dokunma hedefleri, 375/768/1024 kirilim noktalari
-- Sprint 3 altyapisi: GameRoom, RoomManager, GameHub (SignalR), Multiplayer.razor
-  - Dogrulandi: oda kurma (kod 9QEGZ), ikinci oyuncunun katilmasi,
-    ayni odada iki farkli dil (Bahriye TR / Ahmet EN) ayni anda calisiyor
+- Yeniden adlandirma: RenkKapis -> fUNO
+- TR/EN dil destegi (yapisal loglar, LanguageState, LanguageSwitch)
+- UI tasarim sistemi (semantik token, Fredoka/Nunito, SVG kart ikonlari, erisilebilirlik)
+- Sprint 3: SignalR cok oyunculu (GameRoom, RoomManager, GameHub, Multiplayer.razor)
 
-## Yarin ilk isler
-1. BUG: `text-transform: uppercase` Turkce yerelde "IN" -> "İN" yapiyor
-   ("PLAYERS İN ROOM"). Sebep: App.razor'da <html lang="tr"> sabit.
-   Cozum: lang niteligini secilen dile gore ayarla ya da .pile-label'da
-   text-transform yerine metni oldugu gibi birak.
-2. Cok oyunculu oyunu bastan sona test et: Oyunu Baslat -> kart oynama ->
-   kazanma. Simdiye kadar sadece lobiye kadar test edildi.
-3. Baglanti kopma senaryosu: bir sekmeyi kapat, yerine botun oynadigini dogrula.
-4. README'yi INGILIZCE yaz: oyun mantigi, kod yapisi, ozellikler,
-   kullanilan teknolojiler, kurulum adimlari. (Su anki README Turkce ve eski.)
-5. GameRoom icin birim test yaz (su an sadece Core test ediliyor).
+## Bugun duzeltilenler
+1. BUG FIX: `<html lang="tr">` sabitti, text-transform:uppercase Ingilizce metni bile
+   Turkce harf kurallariyla buyutup "IN" -> "İN" yapiyordu. Cozum: her sayfanin
+   kok elementine `lang="@Language.Code"` eklendi (LanguageState.Code: "tr"/"en"),
+   boylece buyutme kurali secili dile gore uygulaniyor. Tarayicida dogrulandi:
+   EN modda "PLAYERS IN ROOM" (duz I), TR modda "ODADAKİ OYUNCULAR" (noktali İ).
+2. TEST: Yeni proje `tests/Funo.Web.Tests` - GameRoom, RoomManager ve Strings/
+   LanguageState icin 35 test eklendi. Toplam 77 test (42 Core + 35 Web).
+   Kritik test: `FullGame_WithDisconnectedHumanHost_BotsFinishTheGame` - insan
+   oyuncu baglantisi koptugunda botun oyunu sonuna kadar kilitlenmeden
+   bitirdigini otomatik olarak dogruluyor.
+3. Cok oyunculu tam akis tarayicida dogrulandi: oda kur -> katil -> baslat ->
+   iki gercek oyuncu sirayla kart oynadi -> biri "sayfa unload" ile baglantisini
+   kopardi -> log'da "X baglantisi koptu, yerine bot oynuyor." goruldu ve bot
+   art arda hamle yapti (Ters, Ters, Joker+4).
+   NOT: Bu testte "tab kapama" (tabs_close) ile bagli kalan bir test-araci
+   artefakti gozlemlendi - kapatilan sekmenin SignalR baglantisi sunucu
+   tarafinda hemen dusmuyor (30+ saniye gecmesine ragmen). Gercek sayfa
+   navigasyonu (location.replace) ile baglanti aninda ve dogru sekilde
+   kapaniyor. Bu, urun kodunda bir hata degil; sadece otomatik tarayici
+   testi yaparken "tabs_close" yerine gercek navigasyon kullanmak gerekiyor.
+
+## Sirada
+1. README'yi INGILIZCE yaz: oyun mantigi, kod yapisi, ozellikler,
+   kullanilan teknolojiler, kurulum adimlari.
+2. Sprint 4: kayit/giris, mac gecmisi, lider tablosu (EF Core + veritabani).
+3. Odalarin bosta kalinca temizlenmesi icin RoomManager.CleanupIdleRooms'u
+   periyodik cagiran bir arka plan servisi (IHostedService) eklenebilir -
+   su an sadece metod var, hic cagrilmiyor.
 
 ## Onemli tuzak
 `dotnet run` hot-reload YAPMAZ. Razor/CSS degistirdikten sonra sunucuyu
