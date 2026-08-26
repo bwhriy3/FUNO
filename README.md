@@ -8,6 +8,12 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 > implements the same general card-matching mechanic under an original name
 > and has no affiliation with Mattel or the official UNO brand.
 
+## Screenshots
+
+| Home screen | In-game (single-player) | Multiplayer lobby |
+|---|---|---|
+| ![Home screen](docs/screenshots/01-setup.png) | ![In-game view](docs/screenshots/02-single-player-game.png) | ![Multiplayer lobby](docs/screenshots/03-multiplayer-lobby.png) |
+
 ## Table of contents
 
 - [Features](#features)
