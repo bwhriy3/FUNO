@@ -224,9 +224,14 @@ public class GameRoomTests
         var room = NewRoom();
         room.Start("Bahriye", botCount: 3);
 
-        // Insan (oda sahibi) baglantisini kaybediyor; botlar onun yerine oynamali
-        // ve oyun kilitlenmeden bitmeli.
+        // Insan (oda sahibi) baglantisini kaybediyor; botlar onun yerine oynamali.
+        // GameRoom artik oyunu kendi basina sonuna kadar surmez (bkz. TryAdvanceOneBotTurn
+        // dokumantasyonu) - bunu GameHub, her hamle arasina bekleme koyarak yapar.
+        // Testte ayni dongu manuel kuruluyor.
         room.Disconnect("conn-host");
+
+        int guard = 0;
+        while (room.TryAdvanceOneBotTurn() && guard++ < 1000) { }
 
         var finalView = room.BuildViewFor("Bahriye");
 
@@ -238,21 +243,46 @@ public class GameRoomTests
     }
 
     [Fact]
+    public void TryAdvanceOneBotTurn_PlaysExactlyOneTurnAtATime()
+    {
+        var room = NewRoom();
+        room.Start("Bahriye", botCount: 3);
+        room.Disconnect("conn-host"); // Bahriye artik bot-kontrollu
+
+        var before = room.BuildViewFor("Bahriye")!.Players.Single(p => p.Name == "Bahriye").CardCount;
+        bool moved = room.TryAdvanceOneBotTurn();
+        var after = room.BuildViewFor("Bahriye")!.Players.Single(p => p.Name == "Bahriye").CardCount;
+
+        Assert.True(moved);
+        // Bir hamle ya kart sayisini bir azaltir (oynadi) ya da artirir (cekti).
+        Assert.NotEqual(before, after);
+    }
+
+    [Fact]
+    public void TryAdvanceOneBotTurn_ReturnsFalse_WhenItIsHumanTurn()
+    {
+        var room = NewRoom();
+        room.Join("Ahmet", "conn-2");
+        room.Start("Bahriye", botCount: 0); // iki insan, hic bot yok, Bahriye'nin sirasi
+
+        Assert.False(room.TryAdvanceOneBotTurn());
+    }
+
+    [Fact]
     public void Reconnect_DuringActiveGame_RestoresView()
     {
         var room = NewRoom();
         room.Join("Ahmet", "conn-2");
         room.Start("Bahriye", botCount: 0);
 
-        // Bahriye ilk oyuncu oldugu icin baglantisi kesilir kesilmez
-        // bot onun yerine bir hamle yapar (kart oynar veya ceker).
+        // Disconnect artik kendiliginden bot hamlesi tetiklemiyor (bu GameHub'in isi);
+        // sadece bagliligi isaretler. El bu yuzden hala tam 7 kart olmali.
         room.Disconnect("conn-host");
         var rejoinError = room.Join("Bahriye", "conn-host-2");
 
         Assert.Null(rejoinError);
         var view = room.BuildViewFor("Bahriye")!;
         Assert.True(view.IsStarted);
-        // Bot lehine oynanmis olsa da el hala gecerli bir oyun durumunu yansitmali.
-        Assert.True(view.YourHand.Count is >= 5 and <= 9);
+        Assert.Equal(7, view.YourHand.Count);
     }
 }

@@ -113,7 +113,6 @@ public sealed class GameRoom
             else
             {
                 AddLog("log.botTookOver", member.Player.Name);
-                AdvanceBots();
             }
         }
     }
@@ -151,8 +150,6 @@ public sealed class GameRoom
 
             _state = GameEngine.StartNew(_members.Select(m => m.Player), GameOptions.Default);
             AddLog("log.gameStarted", Strings.Token.Card(_state.TopCard!));
-
-            AdvanceBots();
             return null;
         }
     }
@@ -193,7 +190,6 @@ public sealed class GameRoom
             if (_state.IsFinished)
                 AddLog("log.finished", _state.Winner!.Name);
 
-            AdvanceBots();
             return null;
         }
     }
@@ -227,8 +223,6 @@ public sealed class GameRoom
 
             _drawnPlayableCard = null;
             _drawnPlayableFor = null;
-
-            AdvanceBots();
             return null;
         }
     }
@@ -249,8 +243,6 @@ public sealed class GameRoom
             _drawnPlayableFor = null;
             _state.AdvanceTurn();
             AddLog("log.passed", playerName);
-
-            AdvanceBots();
             return null;
         }
     }
@@ -350,20 +342,23 @@ public sealed class GameRoom
     }
 
     /// <summary>
-    /// Sira bir bota (veya baglantisi kopmus oyuncuya) geldigi surece otomatik oynar.
-    /// Kilit zaten tutuluyorken cagrilir.
+    /// Tek bir botun (veya baglantisi kopmus oyuncunun) tam sirasini oynar:
+    /// ya bir kart oynar, ya da ceker (ve cektigi kart oynanabiliyorsa hemen oynar).
+    /// Bilerek TEK bir sira ile sinirlidir; boylece cagiran taraf (GameHub) her
+    /// bot hamlesi arasina bir bekleme ve yayin koyup insanlarin oyunu takip
+    /// edebilmesini saglayabilir. Kilitlemeyi kendi icinde yapar.
     /// </summary>
-    private void AdvanceBots()
+    /// <returns>Bir bot hamlesi yapildiysa true; sira insanda veya oyun bittiyse false.</returns>
+    public bool TryAdvanceOneBotTurn()
     {
-        if (_state is null)
-            return;
-
-        int guard = 0;
-        while (!_state.IsFinished && guard++ < 500)
+        lock (_lock)
         {
+            if (_state is null || _state.IsFinished)
+                return false;
+
             var member = FindMember(_state.CurrentPlayer.Name);
             if (member is null || !member.IsBotControlled)
-                break;
+                return false;
 
             var player = _state.CurrentPlayer;
             var choice = _bot.ChooseCard(_state, player);
@@ -380,15 +375,17 @@ public sealed class GameRoom
 
                 if (draw.CanPlayDrawnCard)
                     BotPlay(player, draw.DrawnCards[0]);
-
-                continue;
+            }
+            else
+            {
+                BotPlay(player, choice);
             }
 
-            BotPlay(player, choice);
-        }
+            if (_state.IsFinished && (_log.Count == 0 || _log[0].Key != "log.finished"))
+                AddLog("log.finished", _state.Winner!.Name);
 
-        if (_state.IsFinished && (_log.Count == 0 || _log[0].Key != "log.finished"))
-            AddLog("log.finished", _state.Winner!.Name);
+            return true;
+        }
     }
 
     private void BotPlay(Player player, Card card)

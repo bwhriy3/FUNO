@@ -42,3 +42,29 @@
 `dotnet run` hot-reload YAPMAZ. Razor/CSS degistirdikten sonra sunucuyu
 yeniden baslat, yoksa tarayici eski koda bagli kalir ve olmayan hatalar gorursun.
 `dotnet watch run` bu derdi cozer.
+
+
+## 2026-08-27 - Bug fixes from live playtesting
+
+1. FIX: In multiplayer, all bot moves after a human's turn used to resolve
+   instantly in one lump broadcast (GameRoom.AdvanceBots looped to
+   completion with zero delay). Refactored: GameRoom now exposes
+   `TryAdvanceOneBotTurn()` - exactly one bot's turn per call, still under
+   its lock. GameHub drives it in a loop (`DriveBotsAsync`), broadcasting
+   and waiting 900ms after each individual bot move, matching the pacing
+   already used in single-player `GameSession`. Verified live in browser:
+   bot moves now appear one at a time, ~800ms apart, each fully readable
+   in the log instead of all landing at once.
+2. FIX: Some `HubException`s in `GameHub` threw raw Turkish literal text
+   ("Oda bulunamadi.", "Once bir odaya katilmalisin.", "Oyuncu adi bos
+   olamaz.") instead of the translation keys already defined in
+   `Strings.cs` (`room.notFound`, `room.joinFirst`, `room.nameEmpty`).
+   An English-language player would have seen Turkish error text. Fixed
+   to throw the keys; the client already translates them via
+   `Language.T(...)`.
+3. Updated `GameRoomTests` for the new single-step bot API: the old
+   `FullGame_...` test now drives `TryAdvanceOneBotTurn()` in a loop
+   itself (mirroring what GameHub does), plus two new tests
+   (`TryAdvanceOneBotTurn_PlaysExactlyOneTurnAtATime`,
+   `TryAdvanceOneBotTurn_ReturnsFalse_WhenItIsHumanTurn`) that pin down
+   the single-step contract directly. 79 tests total now (was 77).

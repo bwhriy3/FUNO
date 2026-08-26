@@ -12,6 +12,9 @@ namespace Funo.Web.Hubs;
 /// </summary>
 public sealed class GameHub : Hub
 {
+    /// <summary>Bot hamleleri arasindaki bekleme. Insanlarin oyunu takip edebilmesi icin.</summary>
+    private const int BotMoveDelayMs = 900;
+
     private readonly RoomManager _rooms;
     private readonly ILogger<GameHub> _logger;
 
@@ -60,7 +63,7 @@ public sealed class GameHub : Hub
     {
         playerName = Normalize(playerName);
 
-        var room = _rooms.Find(code) ?? throw new HubException("Oda bulunamadi.");
+        var room = _rooms.Find(code) ?? throw new HubException("room.notFound");
         var error = room.Join(playerName, Context.ConnectionId);
 
         if (error is not null)
@@ -93,18 +96,26 @@ public sealed class GameHub : Hub
 
             if (room.IsEmpty && !room.IsStarted)
                 _rooms.Remove(room.Code);
+            else
+                await DriveBotsAsync(room);
         }
 
         await base.OnDisconnectedAsync(exception);
     }
 
-    /// <summary>Ortak akis: odayi bul, islemi yap, hata varsa cagirana bildir, herkese yayinla.</summary>
+    /// <summary>
+    /// Ortak akis: odayi bul, islemi yap, hata varsa cagirana bildir, herkese yayinla,
+    /// sonra sira bota (veya baglantisi kopmus oyuncuya) gectigi surece botlari
+    /// TEK TEK, aralarina bekleme koyarak oynat. Boylece 3 bota karsi oynarken
+    /// oyuncu, botlarin hangi karti oynadigini gorebiliyor - hepsi tek seferde
+    /// birden bitivermiyor.
+    /// </summary>
     private async Task ExecuteAsync(Func<GameRoom, string?> action)
     {
         if (RoomCode is null || PlayerName is null)
-            throw new HubException("Once bir odaya katilmalisin.");
+            throw new HubException("room.joinFirst");
 
-        var room = _rooms.Find(RoomCode) ?? throw new HubException("Oda bulunamadi.");
+        var room = _rooms.Find(RoomCode) ?? throw new HubException("room.notFound");
         var error = action(room);
 
         if (error is not null)
@@ -114,7 +125,24 @@ public sealed class GameHub : Hub
             return;
         }
 
+        // Once kendi hamlemizi goster
         await BroadcastAsync(room);
+
+        // Sonra botlarin sirasini, her birini goze gorunur sekilde, tek tek oynat
+        await DriveBotsAsync(room);
+    }
+
+    /// <summary>
+    /// Sira bot(a benzer) bir oyuncuda oldugu surece tek tek hamle yaptirir;
+    /// her hamleden sonra durumu yayinlar ve bir sonrakine gecmeden once bekler.
+    /// </summary>
+    private async Task DriveBotsAsync(GameRoom room)
+    {
+        while (room.TryAdvanceOneBotTurn())
+        {
+            await BroadcastAsync(room);
+            await Task.Delay(BotMoveDelayMs);
+        }
     }
 
     /// <summary>
@@ -132,7 +160,7 @@ public sealed class GameHub : Hub
         name = (name ?? "").Trim();
 
         if (name.Length == 0)
-            throw new HubException("Oyuncu adi bos olamaz.");
+            throw new HubException("room.nameEmpty");
 
         return name.Length > 16 ? name[..16] : name;
     }
