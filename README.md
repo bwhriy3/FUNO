@@ -17,7 +17,6 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
 - [Testing](#testing)
-- [Sprint status](#sprint-status)
 
 ## Features
 
@@ -53,8 +52,7 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 | Styling | Hand-written CSS with design tokens (no CSS framework) |
 | Fonts | Fredoka (display) / Nunito (UI text), via Google Fonts |
 
-No database is used yet (rooms and game state live in server memory — see
-[Sprint status](#sprint-status)).
+No database is used yet — rooms and game state live in server memory only.
 
 ## Architecture
 
@@ -223,7 +221,7 @@ dotnet run --project src/Funo.ConsoleSim -- 42
 dotnet test
 ```
 
-77 tests, all passing:
+79 tests, all passing:
 
 - **`Funo.Core.Tests`** (42 tests) — deck composition and shuffling, every
   card-matching rule, turn/direction/penalty-stacking behavior, UNO-call
@@ -231,21 +229,11 @@ dotnet test
   100+ complete games per player count (2, 3, 4, 6 players) and asserts the
   card count always stays conserved at 108 and every game finishes without
   deadlocking.
-- **`Funo.Web.Tests`** (35 tests) — room join/leave/reconnect rules, host
+- **`Funo.Web.Tests`** (37 tests) — room join/leave/reconnect rules, host
   transfer, start-game validation, turn/draw/UNO-call error paths, the
   guarantee that a broadcast view never exposes another player's hand
-  contents, a full game that finishes automatically when a human
-  disconnects and bots take over, and the TR/EN translation table
-  (including that log arguments like card names are translated per viewer,
-  not baked into the stored log).
-
-## Sprint status
-
-- [x] Sprint 0 — Requirements, rule decision table, project skeleton
-- [x] Sprint 1 — Rule engine + bot + tests (42 tests, 550-game simulation)
-- [x] Sprint 2 — Blazor UI, playable single-player game vs. bots
-- [x] Sprint 3 — SignalR multiplayer, room management, disconnect/reconnect,
-      TR/EN localization, design-system UI pass, 77 tests total
-- [ ] Sprint 4 — Accounts/login, match history, leaderboard (needs a database
-      — rooms currently live only in server memory)
-- [ ] Sprint 5 — Final bug fixing, documentation, presentation
+  contents, a full game that finishes when a human disconnects and bots
+  take over (driven one bot-turn at a time, matching how the server paces
+  moves for real players), and the TR/EN translation table (including that
+  log arguments like card names are translated per viewer, not baked into
+  the stored log).
