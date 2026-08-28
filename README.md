@@ -10,9 +10,9 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 
 ## Screenshots
 
-| Home screen | In-game (single-player) | Multiplayer lobby |
-|---|---|---|
-| ![Home screen](docs/screenshots/01-setup.png) | ![In-game view](docs/screenshots/02-single-player-game.png) | ![Multiplayer lobby](docs/screenshots/03-multiplayer-lobby.png) |
+| Home screen | In-game (single-player) | Multiplayer lobby | Leaderboard |
+|---|---|---|---|
+| ![Home screen](docs/screenshots/01-setup.png) | ![In-game view](docs/screenshots/02-single-player-game.png) | ![Multiplayer lobby](docs/screenshots/03-multiplayer-lobby.png) | ![Leaderboard](docs/screenshots/04-leaderboard.png) |
 
 ## Table of contents
 
