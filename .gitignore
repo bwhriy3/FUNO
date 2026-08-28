@@ -5,3 +5,8 @@ obj/
 *.suo
 appsettings.Development.json
 .claude/
+
+# SQLite database (local dev data, not source)
+*.db
+*.db-shm
+*.db-wal

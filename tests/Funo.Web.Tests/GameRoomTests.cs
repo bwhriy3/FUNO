@@ -7,7 +7,7 @@ public class GameRoomTests
 {
     private static GameRoom NewRoom(string host = "Bahriye", string connectionId = "conn-host")
     {
-        var room = new GameRoom("ABCDE", host);
+        var room = new GameRoom("ABCDE", host, TestSupport.CreateRecorder());
         var error = room.Join(host, connectionId);
         Assert.Null(error);
         return room;

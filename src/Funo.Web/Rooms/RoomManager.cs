@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using Funo.Web.Data;
 
 namespace Funo.Web.Rooms;
 
@@ -9,9 +10,12 @@ namespace Funo.Web.Rooms;
 public sealed class RoomManager
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new(StringComparer.OrdinalIgnoreCase);
+    private readonly MatchRecorder _recorder;
 
     /// <summary>Karisikligi onlemek icin benzer gorunen harfler (I, O) disarida birakildi.</summary>
     private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    public RoomManager(MatchRecorder recorder) => _recorder = recorder;
 
     public GameRoom Create(string hostName)
     {
@@ -19,7 +23,7 @@ public sealed class RoomManager
         for (int attempt = 0; attempt < 20; attempt++)
         {
             string code = GenerateCode();
-            var room = new GameRoom(code, hostName);
+            var room = new GameRoom(code, hostName, _recorder);
 
             if (_rooms.TryAdd(code, room))
                 return room;

@@ -45,6 +45,12 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 - **Accessible, responsive UI** — cards are drawn with plain CSS + SVG icons
   (no images, no emoji), 44px minimum touch targets, visible focus states,
   and `prefers-reduced-motion` support. Layout adapts down to 375px.
+- **Leaderboard** — every finished game (single- or multiplayer) is recorded
+  to a local SQLite database. Players are identified by the name they typed
+  in — there are no accounts or passwords, matching how rooms already work.
+  `/leaderboard` ranks players by wins.
+- **Idle room cleanup** — a background service periodically sweeps empty,
+  long-abandoned multiplayer rooms out of memory.
 
 ## Technology stack
 
@@ -57,8 +63,10 @@ and real-time multiplayer, with a bilingual (Turkish / English) interface.
 | Testing | xUnit |
 | Styling | Hand-written CSS with design tokens (no CSS framework) |
 | Fonts | Fredoka (display) / Nunito (UI text), via Google Fonts |
+| Persistence | SQLite via EF Core, for match history / leaderboard only |
 
-No database is used yet — rooms and game state live in server memory only.
+Active multiplayer rooms and in-progress game state still live in server
+memory, not the database — only *finished* games are persisted.
 
 ## Architecture
 
@@ -171,12 +179,14 @@ src/
 
   Funo.Web/                 Blazor Web App (Interactive Server)
     Services/GameSession    Single-player turn orchestration
-    Rooms/                  GameRoom, RoomManager — multiplayer room state
+    Rooms/                  GameRoom, RoomManager, RoomCleanupService
     Hubs/GameHub            SignalR entry point
     Contracts/GameView      Per-player network-safe view + CardDto
     Localization/           Strings (TR/EN table), LanguageState, LogEntry
+    Data/                   FunoDbContext, Match/MatchSeat, MatchRecorder (SQLite)
     Components/Game/        CardView (cards are drawn entirely in CSS + SVG)
-    Components/Pages/       Game.razor (single-player), Multiplayer.razor
+    Components/Pages/       Game.razor (single-player), Multiplayer.razor,
+                             Leaderboard.razor
 
   Funo.ConsoleSim/          Headless bot-vs-bot simulator (Sprint 1 tool)
 
@@ -204,6 +214,9 @@ dotnet run --project src/Funo.Web --launch-profile http
 Open the URL in two different browser windows (or one normal + one private
 window) to try multiplayer locally: create a room in one, join with the
 code shown in the other.
+
+A `funo.db` SQLite file is created automatically next to the project on
+first run (and gitignored) — no separate database setup is needed.
 
 Run the headless bot simulator (4 bots play a complete game to the console):
 

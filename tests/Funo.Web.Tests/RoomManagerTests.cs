@@ -7,7 +7,7 @@ public class RoomManagerTests
     [Fact]
     public void Create_ReturnsFindableRoom()
     {
-        var manager = new RoomManager();
+        var manager = new RoomManager(TestSupport.CreateRecorder());
 
         var room = manager.Create("Bahriye");
         var found = manager.Find(room.Code);
@@ -19,7 +19,7 @@ public class RoomManagerTests
     [Fact]
     public void Create_GeneratesUniqueCodes()
     {
-        var manager = new RoomManager();
+        var manager = new RoomManager(TestSupport.CreateRecorder());
 
         var codes = Enumerable.Range(0, 50)
             .Select(_ => manager.Create("Host").Code)
@@ -31,7 +31,7 @@ public class RoomManagerTests
     [Fact]
     public void Find_UnknownCode_ReturnsNull()
     {
-        var manager = new RoomManager();
+        var manager = new RoomManager(TestSupport.CreateRecorder());
 
         Assert.Null(manager.Find("ZZZZZ"));
     }
@@ -39,7 +39,7 @@ public class RoomManagerTests
     [Fact]
     public void Remove_DeletesRoom()
     {
-        var manager = new RoomManager();
+        var manager = new RoomManager(TestSupport.CreateRecorder());
         var room = manager.Create("Bahriye");
 
         manager.Remove(room.Code);
@@ -50,7 +50,7 @@ public class RoomManagerTests
     [Fact]
     public void CleanupIdleRooms_RemovesOnlyEmptyAndIdle()
     {
-        var manager = new RoomManager();
+        var manager = new RoomManager(TestSupport.CreateRecorder());
         var idleEmpty = manager.Create("Host1");
         idleEmpty.Join("Host1", "conn-1");
         idleEmpty.Disconnect("conn-1"); // artik bos

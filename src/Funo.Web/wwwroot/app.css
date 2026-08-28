@@ -621,3 +621,37 @@ h1, h2, .card, .uno-badge, .lang-btn {
     .card.playable:hover { transform: none; box-shadow: 0 0 0 3px var(--color-accent), var(--shadow-3); }
     .opponent.active { transform: none; }
 }
+
+/* ---------- Top-level leaderboard link ---------- */
+
+.top-nav-leaderboard {
+    position: fixed;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: var(--color-panel-strong);
+    box-shadow: var(--shadow-2);
+    text-decoration: none;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+}
+
+.leaderboard-table th, .leaderboard-table td {
+    text-align: left;
+    padding: .4rem .6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.leaderboard-table th {
+    color: var(--color-muted-foreground);
+    font-weight: 600;
+    font-size: .75rem;
+    text-transform: uppercase;
+}

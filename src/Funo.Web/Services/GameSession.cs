@@ -1,6 +1,7 @@
 using Funo.Core.Ai;
 using Funo.Core.Engine;
 using Funo.Core.Model;
+using Funo.Web.Data;
 using Funo.Web.Localization;
 
 namespace Funo.Web.Services;
@@ -12,8 +13,11 @@ namespace Funo.Web.Services;
 /// </summary>
 public sealed class GameSession
 {
+    private readonly MatchRecorder _recorder;
     private SimpleBot _bot = new();
     private readonly List<LogEntry> _log = new();
+
+    public GameSession(MatchRecorder recorder) => _recorder = recorder;
 
     /// <summary>Arayuzun yeniden cizilmesi gerektiginde tetiklenir.</summary>
     public event Func<Task>? StateChanged;
@@ -227,9 +231,24 @@ public sealed class GameSession
         IsBotThinking = false;
 
         if (State.IsFinished)
+        {
             AddLog("log.finished", State.Winner!.Name);
+            await RecordMatchResultAsync();
+        }
 
         await NotifyAsync();
+    }
+
+    private Task RecordMatchResultAsync()
+    {
+        if (State is null)
+            return Task.CompletedTask;
+
+        var seats = State.Players
+            .Select(p => new MatchSeatResult(p.Name, p.IsBot, p == State.Winner))
+            .ToList();
+
+        return _recorder.RecordAsync(wasMultiplayer: false, seats);
     }
 
     private void PlayAsBot(Player player, Card card)

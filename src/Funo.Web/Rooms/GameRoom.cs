@@ -2,6 +2,7 @@ using Funo.Core.Ai;
 using Funo.Core.Engine;
 using Funo.Core.Model;
 using Funo.Web.Contracts;
+using Funo.Web.Data;
 using Funo.Web.Localization;
 
 namespace Funo.Web.Rooms;
@@ -30,15 +31,18 @@ public sealed class GameRoom
     private readonly List<RoomMember> _members = new();
     private readonly List<LogEntry> _log = new();
     private readonly SimpleBot _bot = new();
+    private readonly MatchRecorder _recorder;
 
     private GameState? _state;
     private Card? _drawnPlayableCard;
     private string? _drawnPlayableFor;
+    private bool _resultRecorded;
 
-    public GameRoom(string code, string hostName)
+    public GameRoom(string code, string hostName, MatchRecorder recorder)
     {
         Code = code;
         HostName = hostName;
+        _recorder = recorder;
     }
 
     public string Code { get; }
@@ -190,6 +194,7 @@ public sealed class GameRoom
             if (_state.IsFinished)
                 AddLog("log.finished", _state.Winner!.Name);
 
+            RecordResultIfFinished();
             return null;
         }
     }
@@ -384,8 +389,39 @@ public sealed class GameRoom
             if (_state.IsFinished && (_log.Count == 0 || _log[0].Key != "log.finished"))
                 AddLog("log.finished", _state.Winner!.Name);
 
+            RecordResultIfFinished();
             return true;
         }
+    }
+
+    /// <summary>
+    /// Oyun az once bittiyse sonucu bir kere kaydeder. Yazma islemi arka planda
+    /// yapilir; veritabani gecici olarak erisilemez olsa bile oyun akisi bundan
+    /// etkilenmemeli. Kilit zaten tutuluyorken cagrilir.
+    /// </summary>
+    private void RecordResultIfFinished()
+    {
+        if (_state is not { IsFinished: true } || _resultRecorded)
+            return;
+
+        _resultRecorded = true;
+
+        var seats = _members
+            .Select(m => new MatchSeatResult(m.Player.Name, m.Player.IsBot, m.Player == _state.Winner))
+            .ToList();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _recorder.RecordAsync(wasMultiplayer: true, seats);
+            }
+            catch
+            {
+                // En kotu ihtimalle bu macin skoru kaydedilmez; oyuncular icin
+                // hicbir sey degismez, o yuzden burada sessizce yutuluyor.
+            }
+        });
     }
 
     private void BotPlay(Player player, Card card)

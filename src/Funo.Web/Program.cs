@@ -1,8 +1,10 @@
 using Funo.Web.Components;
+using Funo.Web.Data;
 using Funo.Web.Hubs;
 using Funo.Web.Localization;
 using Funo.Web.Rooms;
 using Funo.Web.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +18,27 @@ builder.Services.AddScoped<GameSession>();
 // Her oyuncu kendi arayuz dilini secer.
 builder.Services.AddScoped<LanguageState>();
 
+// Mac gecmisi ve lider tablosu icin SQLite. Oyuncular isimle tanimlanir,
+// hesap sistemi yok.
+string dbPath = Path.Combine(builder.Environment.ContentRootPath, "funo.db");
+builder.Services.AddDbContextFactory<FunoDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
+builder.Services.AddSingleton<MatchRecorder>();
+
 // Cok oyunculu odalar tum uygulama boyunca yasar.
 builder.Services.AddSingleton<RoomManager>();
 builder.Services.AddSignalR();
 
+// Bosta kalan odalari periyodik olarak temizler.
+builder.Services.AddHostedService<RoomCleanupService>();
+
 var app = builder.Build();
+
+// Veritabanini (yoksa) olustur.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FunoDbContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

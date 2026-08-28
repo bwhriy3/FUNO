@@ -1,0 +1,82 @@
+@page "/leaderboard"
+@using Funo.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject FunoDbContext Db
+
+<PageTitle>fUNO — Leaderboard</PageTitle>
+
+<div class="table" lang="en">
+    <div class="table-top">
+        <h1>Leaderboard</h1>
+        <a class="btn ghost" href="/">Back</a>
+    </div>
+
+    @if (_rows is null)
+    {
+        <p class="thinking">Loading…</p>
+    }
+    else if (_rows.Count == 0)
+    {
+        <p class="thinking">No finished games yet. Play one!</p>
+    }
+    else
+    {
+        <div class="lobby-players">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Wins</th>
+                        <th>Games</th>
+                        <th>Win rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < _rows.Count; i++)
+                    {
+                        var row = _rows[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>@row.PlayerName</td>
+                            <td>@row.Wins</td>
+                            <td>@row.Games</td>
+                            <td>@row.WinRate.ToString("P0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Row>? _rows;
+
+    private sealed record Row(string PlayerName, int Wins, int Games)
+    {
+        public double WinRate => Games == 0 ? 0 : (double)Wins / Games;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Botlar tablo disi birakilir - burada gercek oyunculari kiyasliyoruz.
+        var grouped = await Db.MatchSeats
+            .Where(s => !s.IsBot)
+            .GroupBy(s => s.PlayerName)
+            .Select(g => new
+            {
+                PlayerName = g.Key,
+                Games = g.Count(),
+                Wins = g.Count(s => s.IsWinner)
+            })
+            .ToListAsync();
+
+        _rows = grouped
+            .Select(g => new Row(g.PlayerName, g.Wins, g.Games))
+            .OrderByDescending(r => r.Wins)
+            .ThenByDescending(r => r.WinRate)
+            .Take(50)
+            .ToList();
+    }
+}
