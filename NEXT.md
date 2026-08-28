@@ -32,11 +32,19 @@ goruldu ve kullanicinin acik istegiyle TAMAMEN kaldirildi. Su an:
    minimal API POST endpoint'i baglaninca "AmbiguousMatchException" olustu.
    Kod artik kaldirildigi icin gecerli degil, sadece not olarak kalsin.
 
+## Bugun ayrica yapilanlar
+- "TEK!"/"Call UNO!" butonu artik kirmizi + "!" rozetli + belirgin nabiz
+  animasyonlu; oncesinde diger butonlarla (Start Game, Leaderboard) ayni
+  altin rengi kullandigi icin gozden kaciyordu.
+- Lider tablosuna sayfalama eklendi (sayfa basi 10 oyuncu, `?page=N`).
+  25+ sahte oyuncuyla tarayicida test edildi: sayfa gecisleri, sinir disi
+  sayfa numaralari (0, negatif, cok buyuk) hepsi dogru clamp ediliyor.
+
 ## Sirada (istenirse)
-- Lider tablosu/mac gecmisi biraz daha cilalanabilir (sayfalama, filtre).
-- "TEK!" butonunun gorunurlugu / zamanlama UX'i iyilestirilebilir.
 - README ekran goruntuleri guncel arayuzu yansitiyor mu kontrol edilmeli
-  (auth kaldirildiktan sonra ust kosede artik sadece Leaderboard butonu var).
+  (auth kaldirildiktan sonra ust kosede artik sadece Leaderboard butonu var,
+  ekran goruntuleri hala eski hali gosteriyor olabilir).
+- Lider tablosuna filtre (ör. sadece cok oyunculu maclar) eklenebilir.
 
 ## Onemli tuzak
 `dotnet run` hot-reload YAPMAZ. Razor/CSS degistirdikten sonra sunucuyu
