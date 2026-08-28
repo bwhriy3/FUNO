@@ -678,3 +678,23 @@ h1, h2, .card, .uno-badge, .lang-btn {
     font-size: .75rem;
     text-transform: uppercase;
 }
+
+/* ---------- Leaderboard pagination ---------- */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-1);
+}
+
+.pagination-status {
+    font-size: .85rem;
+    color: var(--color-muted-foreground);
+}
+
+.pagination span.btn[aria-disabled="true"] {
+    opacity: .35;
+    pointer-events: none;
+}

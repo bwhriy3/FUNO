@@ -15,7 +15,7 @@
     {
         <p class="thinking">Loading…</p>
     }
-    else if (_rows.Count == 0)
+    else if (_totalCount == 0)
     {
         <p class="thinking">No finished games yet. Play one!</p>
     }
@@ -37,7 +37,7 @@
                     {
                         var row = _rows[i];
                         <tr>
-                            <td>@(i + 1)</td>
+                            <td>@(FirstRowNumber + i)</td>
                             <td>@row.PlayerName</td>
                             <td>@row.Wins</td>
                             <td>@row.Games</td>
@@ -47,11 +47,46 @@
                 </tbody>
             </table>
         </div>
+
+        @if (TotalPages > 1)
+        {
+            <div class="pagination">
+                @if (CurrentPage > 1)
+                {
+                    <a class="btn ghost" href="@PageUrl(CurrentPage - 1)">&larr; Prev</a>
+                }
+                else
+                {
+                    <span class="btn ghost" aria-disabled="true">&larr; Prev</span>
+                }
+
+                <span class="pagination-status">Page @CurrentPage of @TotalPages</span>
+
+                @if (CurrentPage < TotalPages)
+                {
+                    <a class="btn ghost" href="@PageUrl(CurrentPage + 1)">Next &rarr;</a>
+                }
+                else
+                {
+                    <span class="btn ghost" aria-disabled="true">Next &rarr;</span>
+                }
+            </div>
+        }
     }
 </div>
 
 @code {
+    private const int PageSize = 10;
+
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageParam { get; set; }
+
     private List<Row>? _rows;
+    private int _totalCount;
+
+    private int CurrentPage => Math.Clamp(PageParam ?? 1, 1, Math.Max(1, TotalPages));
+    private int TotalPages => (int)Math.Ceiling(_totalCount / (double)PageSize);
+    private int FirstRowNumber => (CurrentPage - 1) * PageSize + 1;
 
     private sealed record Row(string PlayerName, int Wins, int Games)
     {
@@ -72,11 +107,16 @@
             })
             .ToListAsync();
 
-        _rows = grouped
+        var allRows = grouped
             .Select(g => new Row(g.PlayerName, g.Wins, g.Games))
             .OrderByDescending(r => r.Wins)
             .ThenByDescending(r => r.WinRate)
-            .Take(50)
+            .ThenBy(r => r.PlayerName, StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+        _totalCount = allRows.Count;
+        _rows = allRows.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
     }
+
+    private string PageUrl(int page) => $"/leaderboard?page={page}";
 }
